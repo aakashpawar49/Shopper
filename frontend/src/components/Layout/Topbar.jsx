@@ -21,7 +21,7 @@ const Topbar = () => {
                 <span>We ship worldwide - Fast and reliable shopping!</span>
             </div>
             <div className="text-sm">
-                <a href="tel:+1234567890" className="hover::text-gray-300">
+                <a href="tel:+1234567890" className="hover:text-gray-300">
                     +1 (234) 567-890 
                 </a>
             </div>
