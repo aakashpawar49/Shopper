@@ -8,7 +8,7 @@ const UserLayout = () => {
       <Header />
       {/* Main Content */}
       <main>
-        
+
       </main>
       {/* Footer */}
       <Footer />
