@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import mensCollectionImage from "../../assets/mens-collection.webp";
 import womensCollectionImage from "../../assets/womens-collection.webp";
 
-const GenderCollection = () => {
+const GenderCollectionSection = () => {
   return <section className="py-16 px-4 lg:px-0">
     <div className="container mx-auto flex flex-col md:flex-row gap-8">
         {/* Women's Collection */}
@@ -41,4 +41,4 @@ const GenderCollection = () => {
   </section>
 }
 
-export default GenderCollection
+export default GenderCollectionSection
