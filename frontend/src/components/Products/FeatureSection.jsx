@@ -15,7 +15,7 @@ const FeatureSection = () => {
             </div>
             <h4 className="tracking-tighter mb-2">FREE INTERNATIONAL SHIPPING</h4>
             <p className="text-gray-600 text-sm tracking-tighter">
-              On all orders over $200.00
+                On all orders over $200.00
             </p>
         </div>
 
@@ -26,7 +26,7 @@ const FeatureSection = () => {
             </div>
             <h4 className="tracking-tighter mb-2">45 DAYS RETURN</h4>
             <p className="text-gray-600 text-sm tracking-tighter">
-              Money back gurantee
+                Money back gurantee
             </p>
         </div>
 
@@ -37,7 +37,7 @@ const FeatureSection = () => {
             </div>
             <h4 className="tracking-tighter mb-2">SECURE CHECKOUT</h4>
             <p className="text-gray-600 text-sm tracking-tighter">
-             100% secured checkout process.
+                100% secured checkout process.
             </p>
         </div>
 
