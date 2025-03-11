@@ -55,7 +55,7 @@ const placeholderProducts = [
     price: 180,
     images: [{ url: "https://picsum.photos/500/500?random=6" }],
   },
-]
+];
 
 const Home = () => {
   return (
