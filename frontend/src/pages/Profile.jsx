@@ -1,3 +1,4 @@
+import MyOrdersPage from "./MyOrdersPage";
 
 const Profile = () => {
   return <div className="min-h-screen flex flex-col">
@@ -13,7 +14,7 @@ const Profile = () => {
             </div>
             {/* Right Section : Orders Table */}
             <div className="w-full md:w-2/3 lg:w-3/4">
-            
+            <MyOrdersPage />
             </div>
         </div>
     </div>
