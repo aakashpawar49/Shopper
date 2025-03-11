@@ -52,7 +52,7 @@ const handleSearch = (e) => {
         </button>
     )}
     </div>
-  )
-}
+  );
+};
 
-export default SearchBar
+export default SearchBar;

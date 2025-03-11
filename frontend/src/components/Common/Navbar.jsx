@@ -8,6 +8,7 @@ import SearchBar from "./SearchBar";
 import CartDrawer from "../Layout/CartDrawer";
 import { useState } from "react";
 import { IoMdClose } from "react-icons/io";
+import Login from "../../pages/Login";
 
 const Navbar = () => {
     const [drawerOpen, setDrawerOpen] = useState(false);
@@ -46,7 +47,7 @@ const Navbar = () => {
             </div>
             {/* Right - Icons */}
             <div className="flex items-center space-x-4">
-                <Link to ="/profile" className="hover:text-black">
+                <Link to ="/login" className="hover:text-black">
                 <HiOutlineUser className="h-6 w-6 text-gray-700"/>
                 </Link>
                 <button onClick={toggleCartDrawer} 
