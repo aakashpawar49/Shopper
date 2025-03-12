@@ -38,19 +38,19 @@ const Navbar = () => {
                 Men
                 </Link>
                 <Link 
-                    to="#" 
+                    to="/collections/all" 
                     className="text-gray-700 hover:text-black text-sm font-medium uppercase"
                 >
                 Women
                 </Link>
                 <Link 
-                    to="#" 
+                    to="/collections/all" 
                     className="text-gray-700 hover:text-black text-sm font-medium uppercase"
                 >
                 Top Wear
                 </Link>
                 <Link 
-                    to="#" 
+                    to="/collections/all" 
                     className="text-gray-700 hover:text-black text-sm font-medium uppercase"
                 >
                 Bottom Wear
