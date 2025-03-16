@@ -104,6 +104,7 @@ const ProductDetails = () => {
                             />
                         ))}
                     </div>
+
                     {/* Main Image */}
                     <div className="md:w-1/2">
                         <div className="mb-4">
@@ -114,8 +115,9 @@ const ProductDetails = () => {
                             />
                         </div>
                     </div>
-                    {/* Mobile Thumbnail */}
-                    <div className="md:hidden flex overscroll-x-scroll space-x-4 mb-4">
+
+                    {/* Mobile Thumbnails (Fixed scrolling issue) */}
+                    <div className="md:hidden flex overflow-x-scroll space-x-4 mb-4">
                         {selectedProduct.images.map((image, index) => (
                             <img
                                 key={index}
@@ -142,6 +144,7 @@ const ProductDetails = () => {
                         <p className="text-xl text-gray-500 mb-2">${selectedProduct.price}</p>
                         <p className="text-gray-600 mb-4">{selectedProduct.description}</p>
 
+                        {/* Color Selection (Fixed color formatting) */}
                         <div className="mb-4">
                             <p className="text-gray-700">Color:</p>
                             <div className="flex gap-2 mt-2">
@@ -150,16 +153,15 @@ const ProductDetails = () => {
                                         key={color}
                                         onClick={() => setSelectedColor(color)}
                                         className={`w-8 h-8 rounded-full border ${
-                                            selectedColor === color
-                                                ? "border-4 border-black"
-                                                : "border-2 border-gray-300"
+                                            selectedColor === color ? "border-4 border-black" : "border-2 border-gray-300"
                                         }`}
-                                        style={{ backgroundColor: color.toLowerCase() }}
+                                        style={{ backgroundColor: color.toLowerCase().replace(/\s/g, '') }}
                                     ></button>
                                 ))}
                             </div>
                         </div>
 
+                        {/* Size Selection */}
                         <div className="mb-4">
                             <p className="text-gray-700">Size:</p>
                             <div className="flex gap-2 mt-2">
@@ -177,6 +179,7 @@ const ProductDetails = () => {
                             </div>
                         </div>
 
+                        {/* Quantity Selection */}
                         <div className="mb-6">
                             <p className="text-gray-700">Quantity:</p>
                             <div className="flex items-center space-x-4 mt-2">
@@ -196,6 +199,7 @@ const ProductDetails = () => {
                             </div>
                         </div>
 
+                        {/* Add to Cart Button */}
                         <button
                             onClick={handleAddToCart}
                             disabled={isButtonDisabled}
@@ -203,26 +207,12 @@ const ProductDetails = () => {
                                 isButtonDisabled ? "cursor-not-allowed opacity-50" : "hover:bg-gray-900"
                             }`}
                         >
-                            {isButtonDisabled ? "Adding..." : "ADD TO CART "}
+                            {isButtonDisabled ? "Adding..." : "ADD TO CART"}
                         </button>
-
-                        <div className="mt-10 text-gray-700">
-                            <h3 className="text-xl font-bold mb-4">Characteristics:</h3>
-                            <table className="w-full text-left text-sm text-gray-600">
-                                <tbody>
-                                    <tr>
-                                        <td className="py-1">Brand</td>
-                                        <td className="py-1">{selectedProduct.brand}</td>
-                                    </tr>
-                                    <tr>
-                                        <td className="py-1">Material</td>
-                                        <td className="py-1">{selectedProduct.material}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
                     </div>
                 </div>
+
+                {/* Similar Products */}
                 <div className="mt-20">
                     <h2 className="text-2xl text-center font-medium mb-4">You May Also Like</h2>
                     <ProductGrid products={similarProducts} />

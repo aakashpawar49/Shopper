@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 const MyOrdersPage = () => {
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Simulate fetching orders
@@ -9,26 +10,20 @@ const MyOrdersPage = () => {
       const mockOrders = [
         {
           id: "12345",
-          createdAt: new Date(),
+          createdAt: Date.now(),
           shippingAddress: { city: "New York", country: "USA" },
           orderItems: [
-            {
-              name: "Product - 1",
-              image: "https://picsum.photos/500/500?random=1",
-            },
+            { name: "Product - 1", image: "https://picsum.photos/500/500?random=1" },
           ],
           totalPrice: 100,
           isPaid: true,
         },
         {
           id: "34567",
-          createdAt: new Date(),
+          createdAt: Date.now(),
           shippingAddress: { city: "New York", country: "USA" },
           orderItems: [
-            {
-              name: "Product - 2",
-              image: "https://picsum.photos/500/500?random=2",
-            },
+            { name: "Product - 2", image: "https://picsum.photos/500/500?random=2" },
           ],
           totalPrice: 100,
           isPaid: true,
@@ -36,6 +31,7 @@ const MyOrdersPage = () => {
       ];
 
       setOrders(mockOrders);
+      setLoading(false);
     }, 1000);
   }, []);
 
@@ -56,15 +52,24 @@ const MyOrdersPage = () => {
             </tr>
           </thead>
           <tbody>
-            {orders.length > 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan="7" className="py-4 px-4 text-center text-gray-500">
+                  Loading orders...
+                </td>
+              </tr>
+            ) : orders.length > 0 ? (
               orders.map((order) => (
                 <tr key={order.id} className="border-b hover:border-gray-50 cursor-pointer">
-                  <td className="py-2 px-2 sm:py-4 sm:px-4">
-                    <img
-                      src={order.orderItems[0].image}
-                      alt={order.orderItems[0].name}
-                      className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg"
-                    />
+                  <td className="py-2 px-2 sm:py-4 sm:px-4 flex gap-2">
+                    {order.orderItems.map((item, index) => (
+                      <img
+                        key={index}
+                        src={item.image}
+                        alt={item.name}
+                        className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg"
+                      />
+                    ))}
                   </td>
                   <td className="py-2 px-2 sm:py-4 sm:px-4 font-medium text-gray-900 whitespace-nowrap">
                     #{order.id}

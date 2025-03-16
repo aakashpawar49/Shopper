@@ -8,7 +8,7 @@ const UserLayout = () => {
       {/* Header */}
       <Header />
       {/* Main Content */}
-      <main>
+      <main className="min-h-screen">
         <Outlet />
       </main>
       {/* Footer */}
@@ -16,4 +16,5 @@ const UserLayout = () => {
     </>
   );
 };
-export default UserLayout
+
+export default UserLayout;

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
@@ -6,100 +6,21 @@ const NewArrivals = () => {
     const scrollRef = useRef(null);
     const [isDragging, setIsDragging] = useState(false);
     const [startX, setStartX] = useState(0);
-    const [scrollLeft, setScrollLeft] = useState(false);
+    const [scrollLeft, setScrollLeft] = useState(0);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(true);
 
-    const new_arrivals = [
-        {
-            "id": "1",
-            name: "Stylish Jacket",
-            price: 120,
-            images: [
-                {
-                    url: "https://picsum.photos/500/500?random=1",
-                    altText: "Stylish Jacket"
-                },
-            ],
-        },
-        {
-            "id": "2",
-            name: "Stylish Jacket",
-            price: 120,
-            images: [
-                {
-                    url: "https://picsum.photos/500/500?random=2",
-                    altText: "Stylish Jacket"
-                },
-            ],
-        },
-        {
-            "id": "3",
-            name: "Stylish Jacket",
-            price: 120,
-            images: [
-                {
-                    url: "https://picsum.photos/500/500?random=3",
-                    altText: "Stylish Jacket"
-                },
-            ],
-        },
-        {
-            "id": "4",
-            name: "Stylish Jacket",
-            price: 120,
-            images: [
-                {
-                    url: "https://picsum.photos/500/500?random=4",
-                    altText: "Stylish Jacket"
-                },
-            ],
-        },
-        {
-            "id": "5",
-            name: "Stylish Jacket",
-            price: 120,
-            images: [
-                {
-                    url: "https://picsum.photos/500/500?random=5",
-                    altText: "Stylish Jacket"
-                },
-            ],
-        },
-        {
-            "id": "6",
-            name: "Stylish Jacket",
-            price: 120,
-            images: [
-                {
-                    url: "https://picsum.photos/500/500?random=6",
-                    altText: "Stylish Jacket"
-                },
-            ],
-        },
-        {
-            "id": "7",
-            name: "Stylish Jacket",
-            price: 120,
-            images: [
-                {
-                    url: "https://picsum.photos/500/500?random=7",
-                    altText: "Stylish Jacket"
-                },
-            ],
-        },
-        {
-            "id": "8",
-            name: "Stylish Jacket",
-            price: 120,
-            images: [
-                {
-                    url: "https://picsum.photos/500/500?random=8",
-                    altText: "Stylish Jacket"
-                },
-            ],
-        },
-    ];
+    const new_arrivals = Array.from({ length: 8 }, (_, i) => ({
+        id: `${i + 1}`,
+        name: "Stylish Jacket",
+        price: 120,
+        images: [
+            {
+                url: `https://picsum.photos/500/500?random=${i + 1}`,
+                altText: "Stylish Jacket",
+            },
+        ],
+    }));
 
     const handleMouseDown = (e) => {
         setIsDragging(true);
@@ -109,42 +30,38 @@ const NewArrivals = () => {
 
     const handleMouseMove = (e) => {
         if (!isDragging) return;
-        const x = e.pageX - scrollRef.current.scrollLeft;
+        e.preventDefault();
+        const x = e.pageX - scrollRef.current.offsetLeft;
         const walk = x - startX;
         scrollRef.current.scrollLeft = scrollLeft - walk;
     };
 
-    const handleMouseUpOrLeave = () => {
-        setIsDragging(false);
-    }
+    const handleMouseUpOrLeave = () => setIsDragging(false);
 
     const scroll = (direction) => {
         const scrollAmount = direction === "left" ? -300 : 300;
-        scrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });  // Line 109 (Fixed method name)
-    };    
+        scrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    };
 
-    // Update Scroll Buttons
-    const updateScrollButtons = () => {
+    const updateScrollButtons = useCallback(() => {
         const container = scrollRef.current;
-
         if (container) {
             const leftScroll = container.scrollLeft;
-            const rightScrollable = 
-                container.scrollWidth > leftScroll + container.clientWidth;
+            const rightScrollable = container.scrollWidth > leftScroll + container.clientWidth;
 
             setCanScrollLeft(leftScroll > 0);
             setCanScrollRight(rightScrollable);
         }
-    };
+    }, []);
 
     useEffect(() => {
         const container = scrollRef.current;
         if (container) {
-            container.addEventListener("scroll",updateScrollButtons);
+            container.addEventListener("scroll", updateScrollButtons);
             updateScrollButtons();
             return () => container.removeEventListener("scroll", updateScrollButtons);
         }
-    }, []);
+    }, [updateScrollButtons]);
 
     return (
         <section className="py-16 px-4 lg:px-0">
@@ -156,34 +73,33 @@ const NewArrivals = () => {
                 </p>
 
                 {/* Scroll Buttons */}
-                <div className="absolute right-0 bottom-[-30px] flex space-x-2">
-                    <button onClick={() => scroll("left")}
-                    disabled={!canScrollLeft}
-                    className={`p-2 rounded border ${
-                        canScrollLeft 
-                            ? "bg-white text-black" 
-                            : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    }`}
-                >
+                <div className="absolute top-1/2 -translate-y-1/2 right-0 flex space-x-2">
+                    <button
+                        onClick={() => scroll("left")}
+                        disabled={!canScrollLeft}
+                        className={`p-2 rounded border ${
+                            canScrollLeft ? "bg-white text-black" : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        }`}
+                    >
                         <FiChevronLeft className="text-2xl" />
                     </button>
                     <button
-                    onClick={() => scroll("right")}
-                    className={`p-2 rounded border ${
-                        canScrollRight 
-                            ? "bg-white text-black" 
-                            : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    }`}>
+                        onClick={() => scroll("right")}
+                        disabled={!canScrollRight}
+                        className={`p-2 rounded border ${
+                            canScrollRight ? "bg-white text-black" : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        }`}
+                    >
                         <FiChevronRight className="text-2xl" />
                     </button>
                 </div>
             </div>
 
             {/* Scrollable Content */}
-            <div 
-                ref = {scrollRef} 
-                className={`container mx-auto overflow-x-scroll flex space-x-6 relative ${isDragging ?
-                    "cursor-grabbing" : "cursor-grab"
+            <div
+                ref={scrollRef}
+                className={`container mx-auto overflow-x-scroll flex space-x-6 relative ${
+                    isDragging ? "cursor-grabbing" : "cursor-grab"
                 }`}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
@@ -191,10 +107,7 @@ const NewArrivals = () => {
                 onMouseLeave={handleMouseUpOrLeave}
             >
                 {new_arrivals.map((product) => (
-                    <div 
-                        key={product.id} 
-                        className="min-w-[100%] sm:min-w-[50%] lg:min-w-[30%] relative"
-                    >
+                    <div key={product.id} className="min-w-[100%] sm:min-w-[50%] lg:min-w-[30%] relative">
                         <img
                             src={product.images[0]?.url}
                             alt={product.images[0]?.altText || product.name}
