@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { FaFilter } from "react-icons/fa";
 import FilterSidebar from "../components/Products/FilterSidebar";
 import SortOptions from "../components/Products/SortOptions";
+import ProductGrid from "../components/Products/ProductGrid";
 
 const CollectionPage = () => {
     const [products, setProducts] = useState([]);
@@ -23,7 +24,10 @@ const CollectionPage = () => {
         // Add Event Listener for clicks
         document.addEventListener("mousedown", handleClickOutside);
         // clean event listener
-    });
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        }
+    }, []);
 
     useEffect(() => {
     setTimeout(() => {
