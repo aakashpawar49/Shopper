@@ -125,6 +125,60 @@ router.put("/", async (req, res) => {
     }
 });
 
+// @route DELETE /api/cart
+// @desc Remove product from the cart 
+// @access Public
+router.delete("/", async (req, res) => {
+    const { productId, size, color, guestId, userId } = req.body;
+    try {
+        let cart = await getCart(userId, guestId);
+
+        if(!cart) return res.status(404).json({ message: "cart not found "});
+
+        const productIndex = cart.products.findIndex(
+            (p) => p.productId.toString() === productId && 
+            p.size === size && 
+            p.color === color
+        );
+
+        if (productIndex > -1){
+            cart.products.splice(productIndex, 1);
+
+            cart.totalPrice = cart.products.reduce(
+                (acc, item) => acc + item.price * item.quantity,
+                0
+            );
+            await cart.save();
+            return res.status(200).json(cart);
+        } else {
+            return res.status(400).json({ message: "Product not found in cart" });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server Error" });
+    }
+});
+
+// @route GET /api/cart
+// @desc Get logged-in user's or guest user's cart
+// @access Public
+router.get("/", async (req, res) => {
+    const { userId, guestId } = req.body;
+
+    try {
+        const cart = await getCart(userId, guestId);
+        if (cart) {
+            res.json(cart);
+        } else {
+            res.status(404).json({ message: "Cart not found" });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server Error" });
+    }
+})
+
+
 // Debugging route
 // GET cart for guestId (debug)
 router.get("/debug", async (req, res) => {
