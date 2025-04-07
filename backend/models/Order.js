@@ -24,8 +24,7 @@ const orderItemSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
-    },
-    { _id: false }
+    }, { _id: false }
 );
 
 const orderSchema = new mongoose.Schema({
@@ -77,4 +76,4 @@ const orderSchema = new mongoose.Schema({
     { timestamps: true }
 );
 
-module.exports = mongoose.model("order", orderSchema);
+module.exports = mongoose.model("Order", orderSchema);

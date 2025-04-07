@@ -28,7 +28,7 @@ router.post("/", protect, async (req, res) => {
             paymentStatus: "Pending",
             isPaid: false,
         });
-        console.log(`Checkout created for user : $(req.user._id)`);
+        console.log(`Checkout created for user: ${req.user._id}`);
         res.status(201).json(newCheckout);
     } catch (error) {
         console.error("Error Creating checkout session:" ,error);
@@ -81,7 +81,7 @@ router.post("/:id/finalize", protect, async(req,res) => {
             // Create final order based on the checkout details
             const finalOrder = await Order.create({
                 user: checkout.user,
-                orderItems: checkout.orderItems,
+                orderItems: checkout.checkoutItems,
                 shippingAddress: checkout.shippingAddress,
                 paymentMethod: checkout.paymentMethod,
                 totalPrice: checkout.totalPrice,
@@ -94,7 +94,7 @@ router.post("/:id/finalize", protect, async(req,res) => {
 
             // Mark the checkout as finalized
             checkout.isFinalized = true;
-            checkout.finalizedAt = date.now();
+            checkout.finalizedAt = Date.now();
             await checkout.save();
             // Delete the cart associated with user
             await Cart.findOneAndDelete({ user: checkout.user });
