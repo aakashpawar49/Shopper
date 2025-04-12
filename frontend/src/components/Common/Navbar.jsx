@@ -26,7 +26,7 @@ const Navbar = () => {
             <nav className="container mx-auto flex items-center justify-between py-4 px-6">
                 {/* Left - Logo */}
                 <div>
-                    <Link to="/" className="text-2xl font-medium">Rabbit</Link>
+                    <Link to="/" className="text-2xl font-medium">Shopper</Link>
                 </div>
                 {/* Center - Navigation Links */}
                 <div className="hidden md:flex space-x-6">
