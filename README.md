@@ -4,6 +4,7 @@ Shopper is a fully functional backend API for an e-commerce platform built using
 
 
 **🚀 Features**
+
 🔐 User Authentication with JWT
 👕 Product listing with filters (color, size, price, category)
 🛒 Cart system for both guests & logged-in users
