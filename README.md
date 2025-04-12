@@ -1,4 +1,4 @@
-##🛍️ Shopper — MERN Stack E-commerce API
+## 🛍️ Shopper — MERN Stack E-commerce API
 
 Shopper is a fully functional backend API for an e-commerce platform built using Node.js, Express, and MongoDB. It handles user registration, authentication, product management, filtering, and cart functionality with support for both guest and logged-in users.
 
