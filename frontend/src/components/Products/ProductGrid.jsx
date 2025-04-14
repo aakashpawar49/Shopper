@@ -14,11 +14,9 @@ const ProductGrid = ({ products = [] }) => {
                 className="w-full h-full object-cover rounded-lg"
               />
             </div>
-            
-            {/* Product Info */}
             <h3 className="text-sm font-medium mb-2">{product?.name}</h3>
             <p className="text-gray-600 font-semibold text-sm tracking-tight">
-              ${product?.price?.toFixed(2) || "N/A"}
+              ${product.price}
             </p>
           </div>
         </Link>
