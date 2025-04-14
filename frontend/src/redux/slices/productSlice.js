@@ -4,7 +4,7 @@ import axios from "axios";
 // Async Thunk to Fetch Products by Collection and optional Features
 export const fetchProductsByFilters = createAsyncThunk(
     "products/fetchByFilters",
-    async ({
+    async({
         collection,
         size,
         color,
@@ -16,7 +16,6 @@ export const fetchProductsByFilters = createAsyncThunk(
         category,
         material,
         brand,
-        limit, // Added to destructure limit properly
     }) => {
         const query = new URLSearchParams();
         if (collection) query.append('collection', collection);
@@ -27,12 +26,13 @@ export const fetchProductsByFilters = createAsyncThunk(
         if (maxPrice) query.append("maxPrice", maxPrice);
         if (sortBy) query.append("sortBy", sortBy);
         if (search) query.append("search", search);
+        if (category) query.append("category", category);
         if (material) query.append("material", material);
         if (brand) query.append("brand", brand);
         if (limit) query.append("limit", limit);
 
         const response = await axios.get(
-            `${import.meta.env.VITE_BACKEND_URL}/api/products?${query.toString()}`
+           `${import.meta.env.VITE_BACKEND_URL}/api/products?${query.toString()}`
         );
         return response.data;
     }
@@ -45,11 +45,11 @@ export const fetchProductDetails = createAsyncThunk(
         const response = await axios.get(
             `${import.meta.env.VITE_BACKEND_URL}/api/products/${id}`
         );
-        return response.data;
+    return response.data;
     }
 );
 
-// Async thunk to update a product
+// Async thunk to fetch similar products
 export const updateProduct = createAsyncThunk(
     "products/updateProduct",
     async ({ id, productData }) => {
@@ -58,7 +58,7 @@ export const updateProduct = createAsyncThunk(
             productData,
             {
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem("userToken")}`,
+                    Authorization: Bearer `${localStorage.getItem("userToken")}`,
                 },
             }
         );
@@ -81,7 +81,7 @@ const productSlice = createSlice({
     name: "products",
     initialState: {
         products: [],
-        productDetails: null, // Updated key to match usage
+        productDetails: null, // Store the details of single product
         similarProducts: [],
         loading: false,
         error: null,
@@ -114,58 +114,82 @@ const productSlice = createSlice({
                 material: "",
                 collection: "",
             };
-        },
+        }, 
     },
     extraReducers: (builder) => {
         builder
-            // handle fetching products with filter
-            .addCase(fetchProductsByFilters.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(fetchProductsByFilters.fulfilled, (state, action) => {
-                state.loading = false;
-                state.products = Array.isArray(action.payload) ? action.payload : [];
-            })
-            .addCase(fetchProductsByFilters.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.error.message;
-            })
-            // Handle fetching single product details
-            .addCase(fetchProductDetails.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(fetchProductDetails.fulfilled, (state, action) => {
-                state.loading = false;
-                state.productDetails = action.payload; // fixed key usage
-            })
-            .addCase(fetchProductDetails.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.error.message; // fixed assignment
-            });
+    // handle fetching products with filter
+        .addCase(fetchProductsByFilters.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(fetchProductsByFilters.fulfilled, (state, action) => {
+            state.loading = false;
+            state.products = Array.isArray(action.payload) ? action.payload : [];
+        })
+        .addCase(fetchProductsByFilters.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.error.message;
+        })
+    // Handle fetching single product details
+        .addCase(fetchProductDetails.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(fetchProductDetails.fulfilled, (state, action) => {
+            state.loading = false;
+            state.selectedProduct = action.payload;
+        })
+        .addCase(fetchProductDetails.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.error.message;
+        })
+
+    // Handle updating product
+        .addCase(updateProduct.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(updateProduct.fulfilled, (state) => {
+            state.loading = false;
+            state.error = action.payload;
+            const index = state.products.findIndex(
+                (product) => product._id === updateProduct._id
+            );
+            if (index !== -1) {
+                state.products[index] = action.payload;
+            }
+        })
+        .addCase(updateProduct.rejected, (state) => {
+            state.loading = false;
+            state.error = action.error.message;
+        })
+        .addCase(fetchSimilarProducts.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(fetchSimilarProducts.fulfilled, (state, action) => {
+            state.loading = false;
+            state.products = action.payload;
+        })
+        .addCase(fetchSimilarProducts.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.error.message;
+        })
     },
 });
 
-export const { setFilters } = productSlice.actions;
+export const { setFilters, clearFilters } = productSlice.actions;
 export default productSlice.reducer;
 
 
-
-
-// OLD replaced code
-// Errors:
-// ReferenceError – limit is used in fetchProductsByFilters but never declared or passed as a parameter.
-// Logical Error – In fetchProductDetails.rejected, you're using state.error - action.error.message; which should be state.error = action.error.message;.
-// Missing Export – productSlice.reducer is not exported at the end of the file.
-// Inconsistency – In fetchProductDetails.fulfilled, you're assigning to state.selectedProduct, but the initial state defines productDetails. This leads to an inconsistency in state usage.
 // import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 // import axios from "axios";
 
 // // Async Thunk to Fetch Products by Collection and optional Features
 // export const fetchProductsByFilters = createAsyncThunk(
 //     "products/fetchByFilters",
-//     async({
+//     async ({
 //         collection,
 //         size,
 //         color,
@@ -177,6 +201,7 @@ export default productSlice.reducer;
 //         category,
 //         material,
 //         brand,
+//         limit, // Added to destructure limit properly
 //     }) => {
 //         const query = new URLSearchParams();
 //         if (collection) query.append('collection', collection);
@@ -192,7 +217,7 @@ export default productSlice.reducer;
 //         if (limit) query.append("limit", limit);
 
 //         const response = await axios.get(
-//             ${import.meta.env.VITE_BACKEND_URL}/api/products?${query.toString()}
+//             `${import.meta.env.VITE_BACKEND_URL}/api/products?${query.toString()}`
 //         );
 //         return response.data;
 //     }
@@ -203,22 +228,22 @@ export default productSlice.reducer;
 //     "products/fetchProductDetails",
 //     async (id) => {
 //         const response = await axios.get(
-//             ${import.meta.env.VITE_BACKEND_URL}/api/products/${id}
+//             `${import.meta.env.VITE_BACKEND_URL}/api/products/${id}`
 //         );
-//     return response.data;
+//         return response.data;
 //     }
 // );
 
-// // Async thunk to fetch similar products
+// // Async thunk to update a product
 // export const updateProduct = createAsyncThunk(
 //     "products/updateProduct",
 //     async ({ id, productData }) => {
 //         const response = await axios.put(
-//             ${import.meta.env.VITE_BACKEND_URL}/api/products/${id},
+//             `${import.meta.env.VITE_BACKEND_URL}/api/products/${id}`,
 //             productData,
 //             {
 //                 headers: {
-//                     Authorization: Bearer ${localStorage.getItem("userToken")},
+//                     Authorization: `Bearer ${localStorage.getItem("userToken")}`,
 //                 },
 //             }
 //         );
@@ -231,7 +256,7 @@ export default productSlice.reducer;
 //     "products/fetchSimilarProducts",
 //     async ({ id }) => {
 //         const response = await axios.get(
-//             ${import.meta.env.VITE_BACKEND_URL}/api/products/similar/${id}
+//             `${import.meta.env.VITE_BACKEND_URL}/api/products/similar/${id}`
 //         );
 //         return response.data;
 //     }
@@ -241,7 +266,7 @@ export default productSlice.reducer;
 //     name: "products",
 //     initialState: {
 //         products: [],
-//         productDetails: null, // Store the details of single product
+//         productDetails: null, // Updated key to match usage
 //         similarProducts: [],
 //         loading: false,
 //         error: null,
@@ -274,35 +299,48 @@ export default productSlice.reducer;
 //                 material: "",
 //                 collection: "",
 //             };
-//         }, 
+//         },
 //     },
 //     extraReducers: (builder) => {
 //         builder
-//     // handle fetching products with filter
-//         .addCase(fetchProductsByFilters.pending, (state) => {
-//             state.loading = true;
-//             state.error = null;
-//         })
-//         .addCase(fetchProductsByFilters.fulfilled, (state, action) => {
-//             state.loading = false;
-//             state.products = Array.isArray(action.payload) ? action.payload : [];
-//         })
-//         .addCase(fetchProductsByFilters.rejected, (state, action) => {
-//             state.loading = false;
-//             state.error = action.error.message;
-//         })
-//     // Handle fetching single product details
-//         .addCase(fetchProductDetails.pending, (state) => {
-//             state.loading = true;
-//             state.error = null;
-//         })
-//         .addCase(fetchProductDetails.fulfilled, (state, action) => {
-//             state.loading = false;
-//             state.selectedProduct = action.payload;
-//         })
-//         .addCase(fetchProductDetails.rejected, (state, action) => {
-//             state.loading = false;
-//             state.error - action.error.message;
-//         });
+//             // handle fetching products with filter
+//             .addCase(fetchProductsByFilters.pending, (state) => {
+//                 state.loading = true;
+//                 state.error = null;
+//             })
+//             .addCase(fetchProductsByFilters.fulfilled, (state, action) => {
+//                 state.loading = false;
+//                 state.products = Array.isArray(action.payload) ? action.payload : [];
+//             })
+//             .addCase(fetchProductsByFilters.rejected, (state, action) => {
+//                 state.loading = false;
+//                 state.error = action.error.message;
+//             })
+//             // Handle fetching single product details
+//             .addCase(fetchProductDetails.pending, (state) => {
+//                 state.loading = true;
+//                 state.error = null;
+//             })
+//             .addCase(fetchProductDetails.fulfilled, (state, action) => {
+//                 state.loading = false;
+//                 state.productDetails = action.payload; // fixed key usage
+//             })
+//             .addCase(fetchProductDetails.rejected, (state, action) => {
+//                 state.loading = false;
+//                 state.error = action.error.message; // fixed assignment
+//             });
 //     },
 // });
+
+// export const { setFilters } = productSlice.actions;
+// export default productSlice.reducer;
+
+
+
+
+// OLD replaced code
+// Errors:
+// ReferenceError – limit is used in fetchProductsByFilters but never declared or passed as a parameter.
+// Logical Error – In fetchProductDetails.rejected, you're using state.error - action.error.message; which should be state.error = action.error.message;.
+// Missing Export – productSlice.reducer is not exported at the end of the file.
+// Inconsistency – In fetchProductDetails.fulfilled, you're assigning to state.selectedProduct, but the initial state defines productDetails. This leads to an inconsistency in state usage.
