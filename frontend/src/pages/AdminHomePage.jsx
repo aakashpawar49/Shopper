@@ -6,7 +6,7 @@ const AdminHomePage = () => {
         {
             id: 123123,
             user: {
-                name: "John Doe"
+                name: "Aakash Pawar"
             },
             totalPrice: 110,
             status: "Processing",
@@ -19,7 +19,7 @@ const AdminHomePage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="p-4 shadow-md rounded-lg">
                 <h2 className="text-xl font-semibold">Revenue</h2>
-                <p className="text-2xl">$10000</p>
+                <p className="text-2xl">₹10000</p>
             </div>
             <div className="p-4 shadow-md rounded-lg">
                 <h2 className="text-xl font-semibold">Total Orders</h2>
