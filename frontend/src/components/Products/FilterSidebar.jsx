@@ -35,11 +35,11 @@ const FilterSidebar = () => {
       size: params.size ? params.size.split(",") : [],
       material: params.material ? params.material.split(",") : [],
       brand: params.brand ? params.brand.split(",") : [],
-      minPrice: params.minPrice !== undefined ? params.minPrice : 0,
-      maxPrice: params.maxPrice !== undefined ? params.maxPrice : 100,
+      minPrice: params.minPrice !== undefined ? parseInt(params.minPrice) : 0,
+      maxPrice: params.maxPrice !== undefined ? parseInt(params.maxPrice) : 100,
     });
 
-    setPriceRange([0, params.maxPrice !== undefined ? params.maxPrice : 100]);
+    setPriceRange([0, params.maxPrice !== undefined ? parseInt(params.maxPrice) : 100]);
   }, [searchParams]);
 
   const handleFilterChange = (e) => {
@@ -60,6 +60,13 @@ const FilterSidebar = () => {
     updateURLParams(newFilters);
   };
 
+  const handleColorClick = (e) => {
+    const { name, value } = e.target;
+    const newFilters = { ...filters, [name]: value };
+    setFilters(newFilters);
+    updateURLParams(newFilters);
+  };
+
   const updateURLParams = (newFilters) => {
     const params = new URLSearchParams();
     Object.keys(newFilters).forEach((key) => {
@@ -74,7 +81,7 @@ const FilterSidebar = () => {
   };
 
   const handlePriceChange = (e) => {
-    const newPrice = e.target.value;
+    const newPrice = parseInt(e.target.value);
     setPriceRange([0, newPrice]);
     const newFilters = { ...filters, minPrice: 0, maxPrice: newPrice };
     setFilters(newFilters);
@@ -130,7 +137,7 @@ const FilterSidebar = () => {
               key={color}
               name="color"
               value={color}
-              onClick={handleFilterChange}
+              onClick={handleColorClick}
               className={`w-8 h-8 rounded-full border border-gray-300 cursor-pointer transition hover:scale-105 ${filters.color === color ? "ring-2 ring-blue-500" : ""}`}
               style={{ backgroundColor: color.toLowerCase() }}
             ></button>
@@ -152,6 +159,42 @@ const FilterSidebar = () => {
               className='mr-2 h-4 w-4 text-blue-500 focus:ring-blue-400 border-gray-300'
             />
             <span className='text-gray-700'>{size}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Material Filter */}
+      <div className='mb-6'>
+        <label className="block text-gray-600 font-medium mb-2">Material</label>
+        {materials.map((material) => (
+          <div key={material} className='flex items-center mb-1'>
+            <input
+              type='checkbox'
+              name="material"
+              value={material}
+              onChange={handleFilterChange}
+              checked={filters.material.includes(material)}
+              className='mr-2 h-4 w-4 text-blue-500 focus:ring-blue-400 border-gray-300'
+            />
+            <span className='text-gray-700'>{material}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Brand Filter */}
+      <div className='mb-6'>
+        <label className="block text-gray-600 font-medium mb-2">Brand</label>
+        {brands.map((brand) => (
+          <div key={brand} className='flex items-center mb-1'>
+            <input
+              type='checkbox'
+              name="brand"
+              value={brand}
+              onChange={handleFilterChange}
+              checked={filters.brand.includes(brand)}
+              className='mr-2 h-4 w-4 text-blue-500 focus:ring-blue-400 border-gray-300'
+            />
+            <span className='text-gray-700'>{brand}</span>
           </div>
         ))}
       </div>
