@@ -7,6 +7,7 @@ import NewArrivals from "../components/Products/NewArrivals"
 import ProductDetails from "../components/Products/ProductDetails";
 import ProductGrid from "../components/Products/ProductGrid";
 import { useDispatch, useSelector } from "react-redux";
+import { fetchProductsByFilters } from "../redux/slices/productSlice";
 import axios from "axios";
 
 const Home = () => {

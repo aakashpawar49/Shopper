@@ -7,11 +7,10 @@ const NewArrivals = () => {
     const scrollRef = useRef(null);
     const [isDragging, setIsDragging] = useState(false);
     const [startX, setStartX] = useState(0);
-    const [scrollLeft, setScrollLeft] = useState(0); // fixed initial value
+    const [scrollLeft, setScrollLeft] = useState(0);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(true);
-
-    const [NewArrivals, setNewArrivals] = useState([]);
+    const [newArrivals, setNewArrivals] = useState([]); // fixed variable name
 
     useEffect(() => {
         const fetchNewArrivals = async () => {
@@ -36,7 +35,7 @@ const NewArrivals = () => {
 
     const handleMouseMove = (e) => {
         if (!isDragging) return;
-        const x = e.pageX - scrollRef.current.offsetLeft; // fixed walk calculation
+        const x = e.pageX - scrollRef.current.offsetLeft;
         const walk = x - startX;
         scrollRef.current.scrollLeft = scrollLeft - walk;
     };
@@ -50,13 +49,12 @@ const NewArrivals = () => {
         scrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
     };
 
-    // Update Scroll Buttons
     const updateScrollButtons = () => {
         const container = scrollRef.current;
-        
         if (container) {
             const leftScroll = container.scrollLeft;
-            const rightScrollable = container.scrollWidth > leftScroll + container.clientWidth;
+            const rightScrollable =
+                container.scrollWidth > leftScroll + container.clientWidth;
 
             setCanScrollLeft(leftScroll > 0);
             setCanScrollRight(rightScrollable);
@@ -70,7 +68,7 @@ const NewArrivals = () => {
             updateScrollButtons();
             return () => container.removeEventListener("scroll", updateScrollButtons);
         }
-    }, [NewArrivals]);
+    }, [newArrivals]);
 
     return (
         <section className="py-16 px-4 lg:px-0">
@@ -119,7 +117,7 @@ const NewArrivals = () => {
                 onMouseUp={handleMouseUpOrLeave}
                 onMouseLeave={handleMouseUpOrLeave}
             >
-                {new_arrivals.map((product) => (
+                {newArrivals.map((product) => (
                     <div
                         key={product.id}
                         className="min-w-[100%] sm:min-w-[50%] lg:min-w-[30%] relative"
@@ -144,6 +142,7 @@ const NewArrivals = () => {
 };
 
 export default NewArrivals;
+
 
 
 // import { useEffect, useRef, useState, useCallback } from "react";

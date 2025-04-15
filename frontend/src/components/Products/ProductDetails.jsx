@@ -1,61 +1,35 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import ProductGrid from "./ProductGrid";
+import { useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+    fetchProductDetails,
+    fetchSimilarProducts,
+} from "../../redux/slices/productSlice";
+import { addToCart } from "../../redux/slices/cartSlice";
 
-const selectedProduct = {
-    name: "Stylish Jacket",
-    price: 120,
-    originalPrice: 150,
-    description: "This is a stylish Jacket perfect for any occasion",
-    brand: "FashionBrand",
-    material: "Leather",
-    size: ["S", "M", "L", "XL"],
-    color: ["Black", "Red"],
-    images: [
-        {
-            url: "https://picsum.photos/500/500?random=1",
-            altText: "Stylish Jacket 1",
-        },
-        {
-            url: "https://picsum.photos/500/500?random=2",
-            altText: "Stylish Jacket 2",
-        },
-    ],
-};
-
-const similarProducts = [
-    {
-        id: 1,
-        name: "Product 1",
-        price: 100,
-        images: [{ url: "https://picsum.photos/500/500?random=2" }],
-    },
-    {
-        id: 2,
-        name: "Product 2",
-        price: 150,
-        images: [{ url: "https://picsum.photos/500/500?random=1" }],
-    },
-    {
-        id: 3,
-        name: "Product 3",
-        price: 120,
-        images: [{ url: "https://picsum.photos/500/500?random=4" }],
-    },
-    {
-        id: 4,
-        name: "Product 4",
-        price: 180,
-        images: [{ url: "https://picsum.photos/500/500?random=3" }],
-    },
-];
-
-const ProductDetails = () => {
+const ProductDetails = ({ productId }) => {
+    const { id } = useParams();
+    const dispatch = useDispatch();
+    const {selectedProduct, loading, error, similarProducts} = useSelector(
+        (state) => state.products
+    );
+    const { user, guestId } = useSelector((state) => state.auth);
     const [mainImage, setMainImage] = useState("");
     const [selectedSize, setSelectedSize] = useState("");
     const [selectedColor, setSelectedColor] = useState("");
     const [quantity, setQuantity] = useState(1);
     const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+
+    const productFetchId = productId || id;
+
+    useEffect(() => {
+        if (productFetchId) {
+            dispatch(fetchProductDetails(productFetchId));
+            dispatch(fetchSimilarProducts({id: productFetchId}));
+        }
+    }, [dispatch, productFetchId]);
 
     useEffect(() => {
         if (selectedProduct?.images?.length > 0) {
@@ -78,17 +52,38 @@ const ProductDetails = () => {
 
         setIsButtonDisabled(true);
 
-        setTimeout(() => {
+        dispatch(
+            addToCart({
+                productId: productFetchId,
+                quantity,
+                size: selectedSize,
+                color: selectedColor,
+                guestId,
+                userId: user?._id,
+            })
+        )
+        .then(() => {
             toast.success("Product added to cart!", {
                 duration: 1000,
             });
+        })
+        .finally(() => {
             setIsButtonDisabled(false);
-        }, 500);
+        });
     };
+
+    if(loading) {
+        return <p>Loading...</p>;
+    }
+
+    if(error) {
+        return <p>Error: {error}</p>;
+    }
 
     return (
         <div className="p-6">
-            <div className="max-w-6xl mx-auto bg-white p-8 rounded-lg">
+            {selectedProduct && (
+                <div className="max-w-6xl mx-auto bg-white p-8 rounded-lg">
                 <div className="flex flex-col md:flex-row">
                     {/* Left Thumbnails */}
                     <div className="hidden md:flex flex-col space-y-4 mr-6">
@@ -211,13 +206,14 @@ const ProductDetails = () => {
                         </button>
                     </div>
                 </div>
-
-                {/* Similar Products */}
                 <div className="mt-20">
-                    <h2 className="text-2xl text-center font-medium mb-4">You May Also Like</h2>
-                    <ProductGrid products={similarProducts} />
+                    <h2 className="text-2xl text-center font-medium mb-4">
+                        You May Also Like
+                    </h2>
+                    <ProductGrid products={similarProducts} loading={loading} error={error} />
+                 </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
