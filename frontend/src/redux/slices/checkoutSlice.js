@@ -40,9 +40,9 @@ const checkoutSlice = createSlice({
                 state.loading = false;
                 state.checkout = action.payload;
             })
-            .addCase(createCheckout.rejected, (state, action) => {  // ✅ Changed from .pending to .rejected
+            .addCase(createCheckout.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload;
+                state.error = action.payload || action.error?.message || "An error occurred";;
             });
     },
 });

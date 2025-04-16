@@ -92,7 +92,7 @@ const adminOrderSlice = createSlice({
         })
         .addCase(fetchAllOrders.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.payload.message;
+            state.error = action.payload?.message || "Something went wrong";
         })
         //Update Order Status
         .addCase(updateOrderStatus.fulfilled, (state, action) => {
@@ -107,7 +107,7 @@ const adminOrderSlice = createSlice({
 
         // Delete Order
         .addCase(deleteOrder.fulfilled, (state, action) => {
-            state.orders = state.order.filter(
+            state.orders = state.orders.filter(
                 (order) => order._id !== action.payload
             );
         });
