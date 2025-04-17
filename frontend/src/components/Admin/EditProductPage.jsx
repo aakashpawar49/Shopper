@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
+import { fetchProductDetails, updateProduct } from "../../redux/slices/productSlice";
 
 const EditProductPage = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { id } = useParams();
-    const { selectedProduct, loading, error } = useSelector(
+    const { productDetails, loading, error } = useSelector(
         (state) => state.products
     );
     
@@ -35,10 +36,11 @@ const EditProductPage = () => {
     }, [dispatch, id]);
 
     useEffect(() => {
-        if (selectedProduct) {
-            setProductData(selectedProduct);
+        if (productDetails) {
+            console.log("Fetched Product Details:", productDetails);
+            setProductData(productDetails);
         }
-    }, [selectedProduct]);
+    }, [productDetails]);    
 
     const handleChange = (e) => {
         const { name, value } = e.target;

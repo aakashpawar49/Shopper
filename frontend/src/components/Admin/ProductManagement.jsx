@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { fetchAdminProducts } from "../../redux/slices/adminProductSlice";
+import { deleteProduct } from "../../redux/slices/adminProductSlice";
 
 const ProductManagement = () => {
     const dispatch = useDispatch();
@@ -40,7 +41,7 @@ const ProductManagement = () => {
                         {products.length > 0 ? (
                             products.map((product) => (
                                 <tr
-                                    key={product.id}
+                                    key={product._id}
                                     className="border-b hover:bg-gray-50 cursor-pointer"
                                 >
                                     <td className="py-4 px-4 font-medium text-gray-900 whitespace-nowrap">
@@ -50,7 +51,7 @@ const ProductManagement = () => {
                                     <td className="py-4 px-4">{product.sku}</td>
                                     <td className="py-4 px-4">
                                         <Link
-                                            to={`/admin/products/${product.id}/edit`}
+                                            to={`/admin/products/${product._id}/edit`}
                                             className="bg-yellow-500 text-white px-2 py-1 rounded mr-2 hover:bg-yellow-600"
                                         >
                                             Edit
