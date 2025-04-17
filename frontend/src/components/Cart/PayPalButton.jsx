@@ -4,18 +4,20 @@ const PayPalButton = ({ amount, onSuccess, onError }) => {
     return (
         <PayPalScriptProvider
             options={{
-                "client-id": process.env.REACT_APP_PAYPAL_CLIENT_ID, // Use environment variable
+                "client-id": process.env.REACT_APP_PAYPAL_CLIENT_ID,
             }}
         >
             <PayPalButtons
                 style={{ layout: "vertical" }}
                 createOrder={(data, actions) => {
                     return actions.order.create({
-                        purchase_units: [{ amount: { value: amount } }],
+                        purchase_units: [
+                            { amount: { value:parseFloat(amount).toFixed(2) } },
+                        ],
                     });
                 }}
                 onApprove={(data, actions) => {
-                    return actions.order.capture().then(onSuccess); // Ensure promise chaining
+                    return actions.order.capture().then(onSuccess); 
                 }}
                 onError={onError}
             />

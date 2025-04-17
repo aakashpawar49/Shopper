@@ -1,34 +1,23 @@
-const checkout = {
-    id: "12323",
-    createdAt: new Date(),
-    checkoutItems: [ // ✅ Changed "CheckoutItems" to "checkoutItems"
-        {
-            productId: "1",
-            name: "Jacket",
-            color: "black",
-            size: "M",
-            price: 150,
-            quantity: 1,
-            image: "https://picsum.photos/150?random=1",
-        },
-        {
-            productId: "2",
-            name: "T-Shirt",
-            color: "black",
-            size: "M",
-            price: 120,
-            quantity: 2,
-            image: "https://picsum.photos/150?random=1",
-        },
-    ],
-    shippingAddress: {
-        address: "123 Fashion Street",
-        city: "New York",
-        country: "USA",
-    },
-};
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { clearCart } from "../redux/slices/cartSlice";
 
 const OrderConfirmationPage = () => {
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const {checkout} = useSelector((state) => state.checkout);
+
+// Clear the cart when the order is confirmed
+useEffect(() => {
+    if (checkout && checkout._id) {
+        dispatch(clearCart());
+        localStorage.removeItem("cart");
+    } else {
+        navigate("/my-orders");
+    }
+  }, [checkout, dispatch, navigate]);
+    
     const calculateEstimatedDelivery = (createdAt) => {
         const orderDate = new Date(createdAt);
         orderDate.setDate(orderDate.getDate() + 10); // Add 10 days to the order date
@@ -47,7 +36,7 @@ const OrderConfirmationPage = () => {
                     {/* Order ID and Date */}
                     <div>
                         <h2 className="text-xl font-semibold">
-                            Order ID: {checkout.id}
+                            Order ID: {checkout._id}
                         </h2>
                         <p className="text-gray-500">
                             Order date: {new Date(checkout.createdAt).toLocaleDateString()}
@@ -56,14 +45,14 @@ const OrderConfirmationPage = () => {
                     {/* Estimated Delivery */}
                     <div>
                         <p className="text-emerald-700 text-sm">
-                            Estimated Delivery: {calculateEstimatedDelivery(checkout.createdAt)}
+                            Estimated Delivery: 
+                            {calculateEstimatedDelivery(checkout.createdAt)}
                         </p>
                     </div>
                 </div>
-
                 {/* Ordered Items */}
                 <div className="mb-20">
-                    {checkout.checkoutItems.map((item) => ( // ✅ Added "return" by using "()"
+                    {checkout.checkoutItems.map((item) => (
                         <div key={item.productId} className="flex items-center mb-4">
                             <img
                                 src={item.image}
@@ -83,7 +72,6 @@ const OrderConfirmationPage = () => {
                         </div>
                     ))}
                 </div>
-
                 {/* Payment and Delivery Info */}
                 <div className="grid grid-cols-2 gap-8">
                     <div>
@@ -98,7 +86,8 @@ const OrderConfirmationPage = () => {
                             {checkout.shippingAddress.address}
                         </p>
                         <p className="text-gray-600">
-                            {checkout.shippingAddress.city}, {checkout.shippingAddress.country}
+                            {checkout.shippingAddress.city},{" "}
+                            {checkout.shippingAddress.country}
                         </p>
                     </div>
                 </div>

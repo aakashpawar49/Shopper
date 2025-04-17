@@ -1,45 +1,23 @@
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { fetchUserOrders } from "../redux/slices/orderSlice";
 
 const MyOrdersPage = () => {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { orders, loading, error } = useSelector((state) => state.orders);
 
   useEffect(() => {
-    // Simulate fetching orders
-    setTimeout(() => {
-      const mockOrders = [
-        {
-          id: "12345",
-          createdAt: Date.now(),
-          shippingAddress: { city: "New York", country: "USA" },
-          orderItems: [
-            { name: "Product - 1", image: "https://picsum.photos/500/500?random=1" },
-          ],
-          totalPrice: 100,
-          isPaid: true,
-        },
-        {
-          id: "34567",
-          createdAt: Date.now(),
-          shippingAddress: { city: "New York", country: "USA" },
-          orderItems: [
-            { name: "Product - 2", image: "https://picsum.photos/500/500?random=2" },
-          ],
-          totalPrice: 100,
-          isPaid: true,
-        },
-      ];
+    dispatch(fetchUserOrders)
+  }, [dispatch]);
 
-      setOrders(mockOrders);
-      setLoading(false);
-    }, 1000);
-  }, []);
-  
   const handleRowClick = (orderId) => {
     navigate(`/order/${orderId}`);
-  }
+  };
+
+  if (loading) return <p>Loading...</p>
+  if (error) return <p>Error: {error}</p>
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6">
@@ -72,14 +50,12 @@ const MyOrdersPage = () => {
                   className="border-b hover:border-gray-50 cursor-pointer"
                 >
                   <td className="py-2 px-2 sm:py-4 sm:px-4 flex gap-2">
-                    {order.orderItems.map((item, index) => (
                       <img
                         key={index}
                         src={order.orderItems[0].image}
                         alt={order.orderItems[0].name}
                         className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg"
                       />
-                    ))}
                   </td>
                   <td className="py-2 px-2 sm:py-4 sm:px-4 font-medium text-gray-900 whitespace-nowrap">
                     #{order.id}

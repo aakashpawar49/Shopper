@@ -130,9 +130,11 @@ router.put("/:id", protect, admin, async (req, res) => {
 // @access Private/Admin
 router.delete("/:id", protect, admin, async (req, res) => {
     try {
+        // Find the product from DB 
         const product = await Product.findById(req.params.id);
 
         if (product) {
+            // Remove the product from DB
             await product.deleteOne();
             res.json({ message: "Product removed" });
         } else {
@@ -253,6 +255,7 @@ router.get("/best-seller", async (req, res) => {
 // @access Public
 router.get("/new-arrivals", async (req, res) => {
     try{
+        // Fetch latest 8 products
         const newArrivals = await Product.find().sort({ createdAt: -1 }).limit(8);
         res.json(newArrivals);
     }
@@ -262,31 +265,8 @@ router.get("/new-arrivals", async (req, res) => {
     }
 });
 
-// @route GET /api/products/similar/:id
-// @desc Get similar products based on current product's gender and category
-// @access Public
-router.get("/similar/:id", async (req, res) => {
-    const { id } = req.params;
-    try {
-        const product = await Product.findById(id);
-        if(!product) {
-            return res.status(404).json({ message: "Product Not Found" });
-        }
-        const similarProducts = await Product.find({
-            _id: { $ne: id },
-            gender: product.gender,
-            category: product.category,
-        }).limit(4);
-
-        res.json(similarProducts);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server Error" });
-    }
-});
-
 // @route GET /api/products/:id
-// @desc Get product by id
+// @desc Get a single product by ID
 // @access Public
 router.get("/:id", async (req, res) => {
     try {
@@ -302,4 +282,28 @@ router.get("/:id", async (req, res) => {
     }
 });
 
-module.exports = router;    
+// @route GET /api/products/similar/:id
+// @desc Get similar products based on current product's gender and category
+// @access Public
+router.get("/similar/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+        const product = await Product.findById(id);
+        if(!product) {
+            return res.status(404).json({ message: "Product Not Found" });
+        }
+
+        const similarProducts = await Product.find({
+            _id: { $ne: id },
+            gender: product.gender,
+            category: product.category,
+        }).limit(4);
+
+        res.json(similarProducts);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server Error" });
+    }
+});
+
+module.exports = router;  
