@@ -1,8 +1,9 @@
+// FIXED IMPORTS
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import register from "../assets/register.webp";
+import { useDispatch, useSelector } from "react-redux";
 import { registerUser } from "../redux/slices/authSlice";
-import { useDispatch } from "react-redux";
 import { mergeCart } from "../redux/slices/cartSlice";
 
 const Register = () => {
