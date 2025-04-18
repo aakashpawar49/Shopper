@@ -26,18 +26,13 @@ Shopper is a fully functional e-commerce platform built using React.js, Node.js,
 Landing Page
 ![image](https://github.com/user-attachments/assets/d22c8504-4182-4a62-81a5-581613242b0f)
 
+Collections
+![image](https://github.com/user-attachments/assets/9dae9241-5bbd-4e2b-a376-4cd5f9b806c8)
 
-Admin Panel
-![image](https://github.com/user-attachments/assets/dbf1abd2-1a9b-459a-9e58-580f1550fa0b)
+![image](https://github.com/user-attachments/assets/30fd9a5f-8cea-4f9d-8770-d8455ba9b8ba)
 
-
-User
-![image](https://github.com/user-attachments/assets/60bf6112-85e3-4871-a8bf-09faecce3547)
-
-
-Cart and Products
-![image](https://github.com/user-attachments/assets/96f5f429-f57c-4312-8c1a-5b1903be8f8b)
-
+Admin 
+![image](https://github.com/user-attachments/assets/cf8c5db8-bc24-4a12-8ba8-20538fc8f8c7)
 
 
 ## 🚀 Getting Started
