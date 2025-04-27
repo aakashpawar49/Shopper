@@ -12,7 +12,7 @@ import { addToCart } from "../../redux/slices/cartSlice";
 const ProductDetails = ({ productId }) => {
     const { id } = useParams();
     const dispatch = useDispatch();
-    const { selectedProduct, loading, error, similarProducts } = useSelector(
+    const { productDetails: selectedProduct, loading, error, similarProducts } = useSelector(
         (state) => state.products
     );
     const { user, guestId } = useSelector((state) => state.auth);
@@ -151,7 +151,7 @@ const ProductDetails = ({ productId }) => {
                             <div className="mb-4">
                                 <p className="text-gray-700">Color:</p>
                                 <div className="flex gap-2 mt-2">
-                                    {selectedProduct.color.map((color) => (
+                                    {selectedProduct.colors.map((color) => (
                                         <button
                                             key={color}
                                             onClick={() => setSelectedColor(color)}
@@ -174,7 +174,7 @@ const ProductDetails = ({ productId }) => {
                             <div className="mb-4">
                                 <p className="text-gray-700">Size:</p>
                                 <div className="flex gap-2 mt-2">
-                                    {selectedProduct.size.map((size) => (
+                                    {selectedProduct.sizes.map((size) => (
                                         <button
                                             key={size}
                                             onClick={() => setSelectedSize(size)}
