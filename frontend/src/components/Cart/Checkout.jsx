@@ -17,7 +17,7 @@ const Checkout = () => {
         lastName: "",
         address: "",
         city: "",
-        postalcode: "",
+        postalCode: "", // Fixed the name here to match the backend schema
         country: "",
         phone: "",
     });
@@ -29,15 +29,31 @@ const Checkout = () => {
         }
     }, [cart, navigate]);
 
+    // Handle checkout creation and validate the shipping address
     const handleCreateCheckout = async (e) => {
         e.preventDefault();
+
+        // Validation for shipping address fields
+        if (
+            !shippingAddress.firstName ||
+            !shippingAddress.lastName ||
+            !shippingAddress.address ||
+            !shippingAddress.city ||
+            !shippingAddress.postalCode || // Fixed key here as well
+            !shippingAddress.country ||
+            !shippingAddress.phone
+        ) {
+            alert("Please fill in all the shipping address details.");
+            return;
+        }
+
         if (cart && cart.products.length > 0) {
             const res = await dispatch(
                 createCheckout({
-                    checkoutItems: cart.products,
+                    items: cart.products,
                     shippingAddress,
                     paymentMethod: "PayPal",
-                    totalPrice: cart.totalPrice,
+                    price: cart.totalPrice,
                 })
             );
             if (res.payload && res.payload._id) {
@@ -58,7 +74,7 @@ const Checkout = () => {
                 }
             );
             
-          await handleFinalizeCheckout(CheckoutId); // Finalize checkout if payment is successful
+            await handleFinalizeCheckout(CheckoutId); // Finalize checkout if payment is successful
         } catch (error) {
            console.error(error);
         }
@@ -67,8 +83,7 @@ const Checkout = () => {
     const handleFinalizeCheckout = async (CheckoutId) => {
         try {
             const response = await axios.post(
-                `${import.meta.env.VITE_BACKEND_URL
-                }/api/checkout/${CheckoutId}/finalize`, 
+                `${import.meta.env.VITE_BACKEND_URL}/api/checkout/${CheckoutId}/finalize`, 
             {},
                 {
                     headers: {
@@ -82,8 +97,8 @@ const Checkout = () => {
         }
     };
 
-    if (loading) return <p>Loading cart...</p>
-    if (error) return <p>Error: {error}</p>
+    if (loading) return <p>Loading cart...</p>;
+    if (error) return <p>Error: {error}</p>;
     if (!cart || !cart.products || cart.products.length === 0) {
         return <p>Your cart is empty</p>;
     }
@@ -99,7 +114,7 @@ const Checkout = () => {
                         <label className="block text-gray-700">Email</label>
                         <input 
                             type="email"
-                            value={user? user.email: ""}
+                            value={user ? user.email : ""}
                             className="w-full p-2 border rounded" disabled
                         />
                     </div>
@@ -159,9 +174,9 @@ const Checkout = () => {
                             <label className="block text-gray-700">Postal Code</label>
                             <input
                                 type="text"
-                                value={shippingAddress.postalcode}
+                                value={shippingAddress.postalCode} // Fixed to postalCode to match with backend
                                 onChange={(e) =>
-                                    setShippingAddress({ ...shippingAddress, postalcode: e.target.value })
+                                    setShippingAddress({ ...shippingAddress, postalCode: e.target.value })
                                 }
                                 className="w-full p-2 border rounded"
                                 required
