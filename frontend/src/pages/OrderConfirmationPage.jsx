@@ -60,13 +60,13 @@ useEffect(() => {
                                 className="w-16 h-16 object-cover rounded-md mr-4"
                             />
                             <div>
-                                <h4 className="text-md font-semibold">{item.name}</h4>
+                                <h4 className="text-md font-semibold">₹{item.name}</h4>
                                 <p className="text-sm text-gray-500">
                                     {item.color} | {item.size}
                                 </p>
                             </div>
                             <div className="ml-auto text-right">
-                                <p className="text-md">${item.price}</p>
+                                <p className="text-md">₹{item.price}</p>
                                 <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                             </div>
                         </div>
