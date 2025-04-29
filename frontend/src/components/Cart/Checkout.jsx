@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import PayPalButton from "./PayPalButton";
+import { loadStripe } from "@stripe/stripe-js";
 import { useDispatch, useSelector } from "react-redux";
 import { createCheckout } from "../../redux/slices/checkoutSlice";
 import axios from "axios";
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+const stripe = await stripePromise;
 
 const Checkout = () => {
     const navigate = useNavigate();
@@ -17,7 +20,7 @@ const Checkout = () => {
         lastName: "",
         address: "",
         city: "",
-        postalCode: "", // Fixed the name here to match the backend schema
+        postalCode: "",
         country: "",
         phone: "",
     });
@@ -39,7 +42,7 @@ const Checkout = () => {
             !shippingAddress.lastName ||
             !shippingAddress.address ||
             !shippingAddress.city ||
-            !shippingAddress.postalCode || // Fixed key here as well
+            !shippingAddress.postalCode ||
             !shippingAddress.country ||
             !shippingAddress.phone
         ) {
@@ -50,10 +53,10 @@ const Checkout = () => {
         if (cart && cart.products.length > 0) {
             const res = await dispatch(
                 createCheckout({
-                    items: cart.products,
+                    checkoutItems: cart.products,
                     shippingAddress,
                     paymentMethod: "PayPal",
-                    price: cart.totalPrice,
+                    totalPrice: cart.totalPrice,
                 })
             );
             if (res.payload && res.payload._id) {
@@ -62,21 +65,28 @@ const Checkout = () => {
         }
     };
 
-    const handlePaymentSuccess = async (details) => {
+    const handleStripePayment = async () => {
         try {
-            const response = await axios.put(
-                `${import.meta.env.VITE_BACKEND_URL}/api/checkout/${CheckoutId}/pay`, 
-                { paymentStatus: "paid", paymentDetails: details },
+            const stripe = await stripePromise;
+            const session = await axios.post(
+                `${import.meta.env.VITE_BACKEND_URL}/api/payment/stripe/create-checkout-session`,
+                {
+                    items: cart.products,
+                    price: cart.totalPrice,
+                    checkoutId: CheckoutId,
+                    shippingAddress,
+                },
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("userToken")}`,
                     },
                 }
             );
-            
-            await handleFinalizeCheckout(CheckoutId); // Finalize checkout if payment is successful
+
+            await stripe.redirectToCheckout({ sessionId: session.data.id });
         } catch (error) {
-           console.error(error);
+            console.error("Stripe payment error:", error);
+            alert("Failed to initiate Stripe payment.");
         }
     };
 
@@ -217,12 +227,12 @@ const Checkout = () => {
                             </button>
                         ) : (
                             <div>
-                                <h3 className="text-lg mb-4">Pay with PayPal</h3>
-                                <PayPalButton
-                                    amount={cart.totalPrice}
-                                    onSuccess={handlePaymentSuccess}
-                                    onError={() => alert("Payment failed. Try again.")}
-                                />
+                                <button
+                                    className="w-full bg-indigo-600 text-white py-3 rounded mt-4"
+                                    onClick={handleStripePayment}
+                                >
+                                  Pay with Card (via Stripe)
+                                </button>
                             </div>
                         )}
                     </div>
