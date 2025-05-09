@@ -50,3 +50,39 @@ cd shopper
 npm install
 cd client
 npm install
+Configuration
+Create a .env file in the root directory:
+
+env
+MONGO_URI=mongodb://localhost:27017/shopper
+JWT_SECRET=your_jwt_secret_here
+PORT=5000
+Running the Application
+bash
+# Start backend server (from root directory)
+npm start
+
+# Start frontend (from client directory)
+cd client
+npm start
+🛡️ Security Features
+Password Protection: bcrypt hashing
+
+Secure Authentication: JWT tokens
+
+Access Control: Admin/user role separation
+
+Safe Configuration: Environment variables
+
+📌 Future Improvements
+Payment gateway integration
+
+Product review system
+
+Order history & shipping tracking
+
+Advanced analytics dashboard
+
+👨‍💻 Author
+Aakash Pawar
+GitHub Profile | Portfolio | Contact
