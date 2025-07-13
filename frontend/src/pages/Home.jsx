@@ -13,10 +13,9 @@ import axios from "axios";
 const Home = () => {
   const dispatch = useDispatch();
   const { products, loading, error } = useSelector((state) => state.products);
-  const [bestSellerProduct, setBestSellerProduct] = useState(null);
+  const [bestSeller, setBestSeller] = useState(null);
 
   useEffect(() => {
-    // Fetch products for a specific collection
     dispatch(
       fetchProductsByFilters({
         gender: "Women",
@@ -24,31 +23,20 @@ const Home = () => {
         limit: 8,
       })
     );
-    // Fetch best seller product
+
     const fetchBestSeller = async () => {
       try {
-        const response = await axios.get(
+        const { data } = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/api/products/best-seller`
         );
-        setBestSellerProduct(response.data);
-      } catch (error) {
-        console.error("Error fetching best seller product:", error);
+        setBestSeller(data);
+      } catch (err) {
+        console.error("Best seller fetch failed:", err.message);
       }
     };
+
     fetchBestSeller();
   }, [dispatch]);
-
-  if (loading) {
-    return <p className="text-center mt-10 text-xl">Loading products...</p>;
-  }
-
-  if (error) {
-    return (
-      <p className="text-center mt-10 text-xl text-red-600">
-        Error loading products: {error}
-      </p>
-    );
-  }
 
   return (
     <div>
@@ -57,23 +45,30 @@ const Home = () => {
       <NewArrivals />
 
       {/* Best Seller */}
-      <h2 className="text-3xl text-center font-bold mb-4">Best Seller</h2>
-      {bestSellerProduct ? (
-        <ProductDetails productId={bestSellerProduct._id} />
-      ) : (
-        <p className="text-center">Loading best seller product ...</p>
-      )}
+      <section className="my-12">
+        <h2 className="text-3xl font-bold text-center mb-4">Best Seller</h2>
+        {bestSeller ? (
+          <ProductDetails productId={bestSeller._id} readonly />
+        ) : (
+          <p className="text-center">Loading best seller product...</p>
+        )}
+      </section>
 
-      <div className="container mx-auto">
-        <h2 className="text-3xl text-center font-bold mb-4">
+      {/* Top Wear Section */}
+      <section className="my-12 container mx-auto">
+        <h2 className="text-3xl font-bold text-center mb-4">
           Top Wear for Women
         </h2>
-        {products.length > 0 ? (
-          <ProductGrid products={products} loading={loading} error={error} />
+        {loading ? (
+          <p className="text-center">Loading products...</p>
+        ) : error ? (
+          <p className="text-center text-red-600">Error: {error}</p>
+        ) : products.length > 0 ? (
+          <ProductGrid products={products} />
         ) : (
           <p className="text-center">No products found.</p>
         )}
-      </div>
+      </section>
 
       <FeaturedCollection />
       <FeatureSection />
