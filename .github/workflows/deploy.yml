@@ -1,0 +1,30 @@
+name: Shopper CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main  # Triggers on push to main branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🧾 Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: 📦 Install Dependencies (Frontend)
+        run: npm install
+        working-directory: frontend
+
+      - name: 🏗️ Build Frontend
+        run: npm run build
+        working-directory: frontend
+
+      - name: ✅ Lint/Tests Placeholder (Optional)
+        run: echo "Linting and tests go here"
