@@ -52,7 +52,7 @@ const MyOrdersPage = () => {
                   <td className="py-2 px-2 sm:py-4 sm:px-4 flex gap-2">
                       <img
                         key={index}
-                        src={order.orderItems[0].image}
+                        src={order.orderItems[0].image || "/placeholder.jpg"}
                         alt={order.orderItems[0].name}
                         className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg"
                       />

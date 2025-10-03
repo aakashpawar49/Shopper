@@ -85,8 +85,8 @@ const OrderDetailsPage = () => {
                                 <tr key={item.productId} className="border-b">
                                     <td className="px-4 py-2 flex items-center">
                                         <img
-                                            src={item.image}
-                                            alt={item.name} 
+                                            src={item.image || "/placeholder.jpg"}
+                                            alt={item.name}
                                             className="w-12 h-12 object-cover rounded-lg mr-4"
                                         />
                                         <Link

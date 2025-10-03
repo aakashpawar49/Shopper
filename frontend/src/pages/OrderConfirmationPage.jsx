@@ -55,7 +55,7 @@ useEffect(() => {
                     {checkout.checkoutItems.map((item) => (
                         <div key={item.productId} className="flex items-center mb-4">
                             <img
-                                src={item.image}
+                                src={item.image || "/placeholder.jpg"}
                                 alt={item.name}
                                 className="w-16 h-16 object-cover rounded-md mr-4"
                             />

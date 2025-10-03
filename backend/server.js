@@ -12,6 +12,7 @@ const subscriberRoutes = require("./routes/subscriberRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const productAdminRoutes = require("./routes/productAdminRoutes");
 const adminOrderRoutes = require("./routes/adminOrderRoutes");
+const paymentRoute = require("./routes/paymentRoute");
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use("/api/checkout", checkoutRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api", subscriberRoutes);
+app.use("/api/payment", paymentRoute);  // Added payment route
 
 // Admin
 app.use("/api/admin/users", adminRoutes);
