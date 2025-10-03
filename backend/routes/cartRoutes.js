@@ -250,11 +250,11 @@ router.post("/merge", protect, async (req, res) => {
 
 // Debugging route
 // GET cart for guestId (debug)
-router.get("/debug", async (req, res) => {
-    const { guestId } = req.query;
-    const cart = await Cart.findOne({ guestId });
-    res.json(cart);
-});
+// router.get("/debug", async (req, res) => {
+//     const { guestId } = req.query;
+//     const cart = await Cart.findOne({ guestId });
+//     res.json(cart);
+// });
 
 //Debug route
 // @route GET /api/cart/debug
