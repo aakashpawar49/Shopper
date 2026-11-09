@@ -92,6 +92,7 @@ On Windows PowerShell use `Copy-Item backend/.env.example backend/.env` (same fo
 |---|---|---|
 | `PORT` | No | API port. Defaults to `3000`. |
 | `MONGO_URI` | Yes | MongoDB connection string. |
+| `DNS_SERVERS` | No | Comma-separated DNS servers, for example `8.8.8.8,1.1.1.1`. Set it only if an Atlas `mongodb+srv://` URI fails with `querySrv ECONNREFUSED`. |
 | `JWT_SECRET` | Yes | Long random string used to sign login tokens. |
 | `FRONTEND_URL` | For payments | URL of the frontend, used for the Stripe success/cancel redirects. |
 | `CLOUDINARY_CLOUD_NAME` | For image upload | Cloudinary cloud name. |
