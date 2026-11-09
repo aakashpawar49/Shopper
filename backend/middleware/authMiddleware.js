@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-require("dotenv").config();
 
 // Middleware to protect routes
 const protect = async (req, res, next) => {

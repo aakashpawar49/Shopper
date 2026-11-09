@@ -104,4 +104,11 @@ const productSchema = new mongoose.Schema({
     {timestamps: true}
 );
 
+// Indexes for the storefront's filters and sorts
+productSchema.index({ createdAt: -1 }); // new arrivals
+productSchema.index({ rating: -1 }); // best seller, sort by popularity
+productSchema.index({ price: 1 }); // price sort and range filter
+productSchema.index({ category: 1, gender: 1 }); // category pages, home sections, similar products
+productSchema.index({ collections: 1 });
+
 module.exports = mongoose.model("Product", productSchema);

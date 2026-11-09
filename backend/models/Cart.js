@@ -39,6 +39,10 @@ const cartSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
+// Carts are looked up by user or by guest ID. Sparse, so carts without the field are left out.
+cartSchema.index({ user: 1 }, { sparse: true });
+cartSchema.index({ guestId: 1 }, { sparse: true });
+
 cartSchema.pre("validate", function (next) {
     if (!this.user && !this.guestId) {
         next(new Error("Cart must belong to a user or a guest."));

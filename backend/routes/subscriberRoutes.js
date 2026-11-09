@@ -1,36 +1,33 @@
 const express = require("express");
-const router = express.Router();
 const Subscriber = require("../models/Subscriber");
+const asyncHandler = require("../middleware/asyncHandler");
+
+const router = express.Router();
 
 // @route POST /api/subscribe
 // @desc Handle newsletter subscription
 // @access Public
-router.post("/subscribe", async (req, res) => {
-    const { email } = req.body;
+router.post(
+    "/subscribe",
+    asyncHandler(async (req, res) => {
+        const { email } = req.body;
 
-    if (!email) {
-        return res.status(400).json({ message: "Email is required" });
-    }
-
-    try {
-        // Check if the email is already subscribed
-        let subscriber = await Subscriber.findOne({ email });
-
-        if (subscriber) {
-            return res.status(400).json({ message: "Email is already subscribed" });
+        if (typeof email !== "string" || !email.trim()) {
+            return res.status(400).json({ message: "Email is required" });
         }
 
-        // Create a new subscriber
-        subscriber = new Subscriber({ email });
-        await subscriber.save();
+        try {
+            // The unique index on email rejects duplicates in a single round trip
+            await Subscriber.create({ email });
+        } catch (error) {
+            if (error.code === 11000) {
+                return res.status(400).json({ message: "Email is already subscribed" });
+            }
+            throw error;
+        }
 
-        res.status(201).json({
-            message: "Successfully subscribed to the newsletter"
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server Error" });
-    }
-});
+        res.status(201).json({ message: "Successfully subscribed to the newsletter" });
+    })
+);
 
 module.exports = router;
