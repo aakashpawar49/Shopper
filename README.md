@@ -42,7 +42,7 @@ Shopper/
 ├── backend/                 Express + MongoDB REST API
 │   ├── config/db.js         MongoDB connection
 │   ├── data/products.js     Sample products used by the seeder
-│   ├── middleware/          JWT auth and admin guards
+│   ├── middleware/          JWT auth, admin guard, async handler, error handling
 │   ├── models/              Mongoose models
 │   ├── routes/              API route handlers
 │   ├── seeder.js            Seeds sample data (npm run seed)
@@ -51,7 +51,9 @@ Shopper/
 └── frontend/                React + Vite + Redux Toolkit + Tailwind
     ├── src/
     │   ├── components/      UI components (Admin, Cart, Common, Layout, Products)
-    │   ├── pages/           Route-level pages
+    │   ├── hooks/           Shared hooks (scroll reveal, overlays, auth redirect)
+    │   ├── lib/             API client (axios instance + thunk helper) and formatters
+    │   ├── pages/           Route-level pages (lazy-loaded, except the home page)
     │   └── redux/           Store and slices
     ├── certs/               (optional, git-ignored) local HTTPS certificate
     └── .env.example         Frontend environment template
@@ -161,6 +163,8 @@ JWT-based secure authentication
 Role-based route access (admin vs user)
 
 Environment variables for sensitive config
+
+Security headers with helmet, and request values validated so they can't become MongoDB operators
 
 
 
