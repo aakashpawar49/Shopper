@@ -11,20 +11,25 @@ jobs:
 
     steps:
       - name: 🧾 Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: ⚙️ Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
+
+      - name: 📦 Install Dependencies (Backend)
+        run: npm ci
+        working-directory: backend
 
       - name: 📦 Install Dependencies (Frontend)
-        run: npm install
+        run: npm ci
+        working-directory: frontend
+
+      - name: ✅ Lint Frontend
+        run: npm run lint
         working-directory: frontend
 
       - name: 🏗️ Build Frontend
         run: npm run build
         working-directory: frontend
-
-      - name: ✅ Lint/Tests Placeholder (Optional)
-        run: echo "Linting and tests go here"

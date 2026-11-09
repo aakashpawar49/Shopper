@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { fetchUserOrders } from "../redux/slices/orderSlice";
@@ -9,7 +9,7 @@ const MyOrdersPage = () => {
   const { orders, loading, error } = useSelector((state) => state.orders);
 
   useEffect(() => {
-    dispatch(fetchUserOrders)
+    dispatch(fetchUserOrders());
   }, [dispatch]);
 
   const handleRowClick = (orderId) => {
@@ -45,20 +45,19 @@ const MyOrdersPage = () => {
             ) : orders.length > 0 ? (
               orders.map((order) => (
                 <tr 
-                  key={order.id}
-                  onClick={() => handleRowClick(order.id)}
+                  key={order._id}
+                  onClick={() => handleRowClick(order._id)}
                   className="border-b hover:border-gray-50 cursor-pointer"
                 >
                   <td className="py-2 px-2 sm:py-4 sm:px-4 flex gap-2">
                       <img
-                        key={index}
-                        src={order.orderItems[0].image || "/placeholder.jpg"}
-                        alt={order.orderItems[0].name}
+                        src={order.orderItems[0]?.image || "/placeholder.jpg"}
+                        alt={order.orderItems[0]?.name}
                         className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg"
                       />
                   </td>
                   <td className="py-2 px-2 sm:py-4 sm:px-4 font-medium text-gray-900 whitespace-nowrap">
-                    #{order.id}
+                    #{order._id}
                   </td>
                   <td className="py-2 px-2 sm:py-4 sm:px-4">
                     {new Date(order.createdAt).toLocaleDateString()}{" "}

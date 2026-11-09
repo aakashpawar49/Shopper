@@ -1,13 +1,22 @@
 # Logs
 *.Logs
+*.log
+logs
 
 # Node Modules
-frontend/node_modules/
-backend/node_modules/
+node_modules/
 
-node_modules
-#Environment variables
-frontend/.env
-backend/.env
+# Build output
+frontend/dist/
+
+# Environment variables (commit only the .env.example templates)
+.env
+.env.*
+!.env.example
+
+# Local TLS certificates and private keys for the HTTPS dev server
+frontend/certs/
+*.key
+*.pem
 
 .DS_Store

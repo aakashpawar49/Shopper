@@ -1,6 +1,20 @@
 const express = require('express');
+const Stripe = require('stripe');
+
 const router = express.Router();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+// Create the Stripe client lazily so the server can start without Stripe configured.
+// Only the payment endpoints need STRIPE_SECRET_KEY.
+let stripeClient = null;
+const getStripe = () => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not set. Add it to backend/.env to enable payments.');
+  }
+  if (!stripeClient) {
+    stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY);
+  }
+  return stripeClient;
+};
 
 router.post('/stripe/create-checkout-session', async (req, res) => {
     try {
@@ -31,22 +45,25 @@ router.post('/stripe/create-checkout-session', async (req, res) => {
           quantity: item.quantity,
         };
       });
-  
-      const session = await stripe.checkout.sessions.create({
+
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+      const session = await getStripe().checkout.sessions.create({
         payment_method_types: ['card'],
         line_items: line_items,
         mode: 'payment',
-        success_url: `${process.env.FRONTEND_URL}/success`,
-        cancel_url: `${process.env.FRONTEND_URL}/cancel`,
+        // Both URLs must point at routes that exist in the frontend
+        success_url: `${frontendUrl}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${frontendUrl}/checkout`,
       });
-  
-      // Send back session ID to the frontend
-      res.json({ id: session.id });
+
+      // Stripe.js v7 removed redirectToCheckout, so the frontend redirects to session.url
+      res.json({ id: session.id, url: session.url });
     } catch (error) {
       console.error(error);
-      res.status(500).send('Internal Server Error');
+      res.status(500).json({ error: error.message || 'Internal Server Error' });
     }
   });
-  
+
 
 module.exports = router;

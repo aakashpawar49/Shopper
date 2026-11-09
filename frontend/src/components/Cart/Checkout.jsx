@@ -1,12 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loadStripe } from "@stripe/stripe-js";
 import { useDispatch, useSelector } from "react-redux";
 import { createCheckout } from "../../redux/slices/checkoutSlice";
 import axios from "axios";
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
-const stripe = await stripePromise;
 
 const Checkout = () => {
     const navigate = useNavigate();
@@ -28,7 +24,7 @@ const Checkout = () => {
     // Ensure the cart is not loaded before proceeding
     useEffect(() => {
         if (!cart || !cart.products || cart.products.length === 0) {
-            navigate("/cart");
+            navigate("/");
         }
     }, [cart, navigate]);
 
@@ -55,7 +51,7 @@ const Checkout = () => {
                 createCheckout({
                     checkoutItems: cart.products,
                     shippingAddress,
-                    paymentMethod: "PayPal",
+                    paymentMethod: "Stripe",
                     totalPrice: cart.totalPrice,
                 })
             );
@@ -67,8 +63,7 @@ const Checkout = () => {
 
     const handleStripePayment = async () => {
         try {
-            const stripe = await stripePromise;
-            const session = await axios.post(
+            const { data } = await axios.post(
                 `${import.meta.env.VITE_BACKEND_URL}/api/payment/stripe/create-checkout-session`,
                 {
                     items: cart.products,
@@ -83,27 +78,14 @@ const Checkout = () => {
                 }
             );
 
-            await stripe.redirectToCheckout({ sessionId: session.data.id });
+            if (!data?.url) {
+                throw new Error("Stripe did not return a checkout URL");
+            }
+            // Stripe.js v7 removed redirectToCheckout; redirect to the hosted session URL instead
+            window.location.assign(data.url);
         } catch (error) {
             console.error("Stripe payment error:", error);
             alert("Failed to initiate Stripe payment.");
-        }
-    };
-
-    const handleFinalizeCheckout = async (CheckoutId) => {
-        try {
-            const response = await axios.post(
-                `${import.meta.env.VITE_BACKEND_URL}/api/checkout/${CheckoutId}/finalize`, 
-            {},
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("userToken")}`,
-                    }
-                }
-            );
-            navigate("/order-confirmation");
-        } catch (error) {
-            console.error(error);
         }
     };
 
@@ -228,6 +210,7 @@ const Checkout = () => {
                         ) : (
                             <div>
                                 <button
+                                    type="button"
                                     className="w-full bg-indigo-600 text-white py-3 rounded mt-4"
                                     onClick={handleStripePayment}
                                 >

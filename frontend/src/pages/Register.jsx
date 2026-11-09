@@ -90,6 +90,10 @@ const Register = () => {
                         />
                     </div>
 
+                    {error && (
+                        <p className="mb-4 text-sm text-red-600 text-center">{error}</p>
+                    )}
+
                     {/* Sign Up Button */}
                     <button 
                         type="submit"

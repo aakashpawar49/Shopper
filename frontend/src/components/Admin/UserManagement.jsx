@@ -1,7 +1,7 @@
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { fetchUsers } from "../../redux/slices/adminSlice";
+import { addUser, deleteUser, fetchUsers, updateUser } from "../../redux/slices/adminSlice";
 
 const UserManagement = () => {
     const dispatch = useDispatch();
@@ -14,8 +14,7 @@ const UserManagement = () => {
         if (user && user.role !== "admin") {
             navigate("/");
         }
-    }, [user, navigate()],
-);
+    }, [user, navigate]);
 
     useEffect(() => {
         if(user && user.role === "admin"){
@@ -135,16 +134,16 @@ const UserManagement = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {users.map((user) => (
-                            <tr key={user.id} className="border-b hover:bg-gray-50">
+                        {users.map((u) => (
+                            <tr key={u._id} className="border-b hover:bg-gray-50">
                                 <td className="py-4 px-4 font-medium text-gray-900 whitespace-nowrap">
-                                    {user.name}
+                                    {u.name}
                                 </td>
-                                <td className="py-4 px-4">{user.email}</td>
+                                <td className="py-4 px-4">{u.email}</td>
                                 <td className="py-4 px-4">
                                     <select
-                                        value={user.role}
-                                        onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                                        value={u.role}
+                                        onChange={(e) => handleRoleChange(u._id, e.target.value)}
                                         className="w-full p-2 border rounded"
                                     >
                                         <option value="customer">Customer</option>
@@ -153,7 +152,7 @@ const UserManagement = () => {
                                 </td>
                                 <td className="py-4 px-4">
                                     <button
-                                        onClick={() => handleDeleteUser(user.id)}
+                                        onClick={() => handleDeleteUser(u._id)}
                                         className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
                                     >
                                         Delete

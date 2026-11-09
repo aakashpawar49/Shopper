@@ -25,7 +25,7 @@ const AdminHomePage = () => {
     }, [dispatch]);
 
   return (
-    <div className="max-w-7x mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6">
         <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
         {productsLoading || ordersLoading ? (
             <p>Loading...</p>
@@ -42,14 +42,14 @@ const AdminHomePage = () => {
                 <div className="p-4 shadow-md rounded-lg">
                     <h2 className="text-xl font-semibold">Total Orders</h2>
                     <p className="text-2xl">{totalOrders}</p>
-                    <Link tp="/admin/orders" className="text-blue-500 hover:underline">
+                    <Link to="/admin/orders" className="text-blue-500 hover:underline">
                         Manage Orders
                     </Link>
                 </div>
                 <div className="p-4 shadow-md rounded-lg">
                     <h2 className="text-xl font-semibold">Total Products</h2>
                     <p className="text-2xl">{products.length}</p>
-                    <Link tp="/admin/products" className="text-blue-500 hover:underline">
+                    <Link to="/admin/products" className="text-blue-500 hover:underline">
                         Manage Products
                     </Link>
                 </div>
@@ -71,11 +71,11 @@ const AdminHomePage = () => {
                         {orders.length > 0 ? (
                             orders.map((order) => (
                                 <tr 
-                                    key={order.id}
+                                    key={order._id}
                                     className="border-b hover:bg-gray-50 cursor-pointer"
                                 >
                                     <td className="py-4 px-4">{order._id}</td>
-                                    <td className="py-4 px-4">{order.user.name}</td>
+                                    <td className="py-4 px-4">{order.user?.name || "Deleted user"}</td>
                                     <td className="py-4 px-4">{order.totalPrice.toFixed(2)}</td>
                                     <td className="py-4 px-4">{order.status}</td>
                                 </tr>

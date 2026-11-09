@@ -51,11 +51,12 @@ router.post("/", protect, admin, async(req, res) => {
 router.put("/:id", protect, admin, async(req, res) => {
     try {
         const user = await User.findById(req.params.id);
-        if (user) {
-            user.name = req.body.name || user.name;
-            user.email = req.body.email || user.email;
-            user.role = req.body.role || user.role;
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
         }
+        user.name = req.body.name || user.name;
+        user.email = req.body.email || user.email;
+        user.role = req.body.role || user.role;
         const updatedUser = await user.save();
         res.json({ message: "user updated successfully", user: updatedUser });
     } catch (error) {

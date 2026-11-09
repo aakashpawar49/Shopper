@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useParams } from "react-router-dom"
 import { fetchOrderDetails } from "../redux/slices/orderSlice";
@@ -10,7 +10,7 @@ const OrderDetailsPage = () => {
 
     useEffect(() => {
         dispatch(fetchOrderDetails(id));
-    }), [dispatch, id];
+    }, [dispatch, id]);
 
     if(loading) return <p>Loading....</p>
     if(error) return <p>Error: {error}</p>
@@ -26,7 +26,7 @@ const OrderDetailsPage = () => {
                 <div className="flex flex-col sm:flex-row justify-between mb-8">
                     <div>
                         <h3 className="text-lg md:text-xl font-semibold">
-                            Order ID: #{orderDetails.id}
+                            Order ID: #{orderDetails._id}
                         </h3>
                         <p className="text-gray-600">
                             {new Date(orderDetails.createdAt).toLocaleDateString()}
@@ -106,7 +106,7 @@ const OrderDetailsPage = () => {
             </div>
 
             {/* Back to Orders Link */}
-            <Link to="my-orders" className="text-blue-500 hover:underline">
+            <Link to="/my-orders" className="text-blue-500 hover:underline">
                 Back to My Orders
             </Link>
         </div>

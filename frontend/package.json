@@ -12,7 +12,6 @@
   "dependencies": {
     "@paypal/react-paypal-js": "^8.8.2",
     "@reduxjs/toolkit": "^2.6.1",
-    "@stripe/stripe-js": "^7.4.0",
     "axios": "^1.15.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

@@ -16,7 +16,7 @@ export const fetchAllOrders = createAsyncThunk(
             );
             return response.data;
         } catch (error) {
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(error.response?.data || { message: error.message });
         }
     }
 );
@@ -37,7 +37,7 @@ export const updateOrderStatus = createAsyncThunk(
             );
             return response.data;
         } catch (error) {
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(error.response?.data || { message: error.message });
         }
     }
 );
@@ -57,7 +57,7 @@ export const deleteOrder = createAsyncThunk(
             );
             return id;
         } catch (error) {
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(error.response?.data || { message: error.message });
         }
     }
 );
@@ -86,7 +86,7 @@ const adminOrderSlice = createSlice({
 
             // calculate total sales
             const totalSales = action.payload.reduce((acc, order) => {
-                return acc + order.total;
+                return acc + (order.totalPrice || 0);
             }, 0);
             state.totalSales = totalSales;
         })
