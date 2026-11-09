@@ -1,214 +1,195 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { fetchProductDetails, updateProduct } from "../../redux/slices/productSlice";
+import { toast } from "sonner";
+import { fetchProductDetails } from "../../redux/slices/productSlice";
+import { updateProduct } from "../../redux/slices/adminProductSlice";
+import api, { getErrorMessage } from "../../lib/api";
+import PageLoader from "../Common/PageLoader";
+
+const EMPTY_PRODUCT = {
+    name: "",
+    description: "",
+    price: 0,
+    countInStock: 0,
+    sku: "",
+    category: "",
+    brand: "",
+    sizes: [],
+    colors: [],
+    collections: "",
+    material: "",
+    gender: "",
+    images: [],
+};
+
+// Turns "S, M, L" into ["S", "M", "L"]
+const toList = (value) => value.split(",").map((item) => item.trim());
 
 const EditProductPage = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { id } = useParams();
-    const { productDetails, loading, error } = useSelector(
-        (state) => state.products
-    );
-    
-    const [productData, setProductData] = useState({
-        name: "",
-        description: "",
-        price: 0,
-        countInStock: 0,
-        sku: "",
-        category: "",
-        brand: "",
-        sizes: [],
-        colors: [],
-        collections: "",
-        material: "",
-        gender: "",
-        images: [],
-    });
-
-    const [uploading, setUploading] = useState(false); // Image uploading state
+    const productDetails = useSelector((state) => state.products.productDetails);
+    const detailsError = useSelector((state) => state.products.detailsError);
+    const [productData, setProductData] = useState(EMPTY_PRODUCT);
+    const [loadedId, setLoadedId] = useState(null);
+    const [uploading, setUploading] = useState(false);
+    const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        if (id) {
-            dispatch(fetchProductDetails(id));
-        }
+        if (!id) return undefined;
+        const request = dispatch(fetchProductDetails(id));
+        return () => request.abort();
     }, [dispatch, id]);
 
-    useEffect(() => {
-        if (productDetails) {
-            console.log("Fetched Product Details:", productDetails);
-            setProductData(productDetails);
-        }
-    }, [productDetails]);    
+    // Copy the fetched product into the form once (ignoring details left over
+    // from another product)
+    if (productDetails?._id === id && loadedId !== id) {
+        setLoadedId(id);
+        setProductData({ ...EMPTY_PRODUCT, ...productDetails });
+    }
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setProductData((prevData) => ({ ...prevData, [name]: value }));
+        setProductData((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
+        if (!file) return;
         const formData = new FormData();
-        formData.append('image', file);
+        formData.append("image", file);
 
+        setUploading(true);
         try {
-            setUploading(true);
-            const { data } = await axios.post(
-                `${import.meta.env.VITE_BACKEND_URL}/api/upload`,
-                formData,
-                {
-                    headers: { "Content-Type": "multipart/form-data" },
-                }
-            );
-            setProductData((prevData) => ({
-                ...prevData,
-                images: [...prevData.images, {url: data.imageUrl, altText: ""}],
-            }))
-            setUploading(false);
+            const { data } = await api.post("/api/upload", formData, { requiresAuth: true });
+            setProductData((prev) => ({
+                ...prev,
+                images: [...prev.images, { url: data.imageUrl, altText: "" }],
+            }));
         } catch (error) {
-            console.error(error);
+            toast.error(`Image upload failed: ${getErrorMessage(error)}`);
+        } finally {
             setUploading(false);
         }
     };
 
-    const handleSubmit = (e) => {
+    // Wait for the save to succeed before leaving the page
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        dispatch(updateProduct({ id, productData }));
-        navigate("/admin/products");
+        setSaving(true);
+        try {
+            await dispatch(updateProduct({ id, productData })).unwrap();
+            toast.success("Product updated");
+            navigate("/admin/products");
+        } catch (error) {
+            toast.error(`Couldn't save the product: ${error.message}`);
+        } finally {
+            setSaving(false);
+        }
     };
 
-    if (loading) return <p>Loading ...</p>
-    if (error) return <p>Error: {error} </p>
+    if (detailsError && loadedId !== id) return <p className="text-red-600">Error: {detailsError}</p>;
+    if (loadedId !== id) return <PageLoader />;
 
     return (
-        <div className="max-w-5xl mx-auto p-6 shadow-md rounded-md">
-            <h2 className="text-3xl font-bold mb-6">Edit Product</h2>
+        <div className="mx-auto max-w-5xl rounded-2xl border border-gray-100 p-6 shadow-sm">
+            <h2 className="mb-6 text-3xl font-bold">Edit Product</h2>
             <form onSubmit={handleSubmit}>
-                {/* Name */}
                 <div className="mb-6">
-                    <label className="block font-semibold mb-2">Product Name</label>
-                    <input
-                        type="text"
-                        name="name"
-                        value={productData.name}
-                        onChange={handleChange}
-                        className="w-full border-gray-300 rounded-md p-2"
-                        required
-                    />
+                    <label htmlFor="name" className="label">Product Name</label>
+                    <input id="name" type="text" name="name" value={productData.name} onChange={handleChange} className="input" required />
                 </div>
 
-                {/* Description */}
                 <div className="mb-6">
-                    <label className="block font-semibold mb-2">Description</label>
+                    <label htmlFor="description" className="label">Description</label>
                     <textarea
+                        id="description"
                         name="description"
                         value={productData.description}
                         onChange={handleChange}
-                        className="w-full border border-gray-300 rounded-md p-2"
+                        className="input"
                         rows={4}
                         required
                     />
                 </div>
 
-                {/* Price */}
-                <div className="mb-6">
-                    <label className="block font-semibold mb-2">Price</label>
-                    <input
-                        type="number"
-                        name="price"
-                        value={productData.price}
-                        onChange={handleChange}
-                        className="w-full border-gray-300 rounded-md p-2"
-                    />
+                <div className="mb-6 grid gap-6 sm:grid-cols-3">
+                    <div>
+                        <label htmlFor="price" className="label">Price</label>
+                        <input id="price" type="number" name="price" value={productData.price} onChange={handleChange} className="input" />
+                    </div>
+                    <div>
+                        <label htmlFor="countInStock" className="label">Count In Stock</label>
+                        <input
+                            id="countInStock"
+                            type="number"
+                            name="countInStock"
+                            value={productData.countInStock}
+                            onChange={handleChange}
+                            className="input"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="sku" className="label">SKU</label>
+                        <input id="sku" type="text" name="sku" value={productData.sku} onChange={handleChange} className="input" />
+                    </div>
                 </div>
 
-                {/* Count In Stock */}
-                <div className="mb-6">
-                    <label className="block font-semibold mb-2">Count In Stock</label>
-                    <input
-                        type="number"
-                        name="countInStock"
-                        value={productData.countInStock}
-                        onChange={handleChange}
-                        className="w-full border-gray-300 rounded-md p-2"
-                    />
+                <div className="mb-6 grid gap-6 sm:grid-cols-2">
+                    <div>
+                        <label htmlFor="sizes" className="label">Sizes (comma-separated)</label>
+                        <input
+                            id="sizes"
+                            type="text"
+                            name="sizes"
+                            value={productData.sizes.join(", ")}
+                            onChange={(e) => setProductData((prev) => ({ ...prev, sizes: toList(e.target.value) }))}
+                            className="input"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="colors" className="label">Colors (comma-separated)</label>
+                        <input
+                            id="colors"
+                            type="text"
+                            name="colors"
+                            value={productData.colors.join(", ")}
+                            onChange={(e) => setProductData((prev) => ({ ...prev, colors: toList(e.target.value) }))}
+                            className="input"
+                        />
+                    </div>
                 </div>
 
-                {/* SKU */}
                 <div className="mb-6">
-                    <label className="block font-semibold mb-2">SKU</label>
+                    <label htmlFor="image" className="label">Upload Image</label>
                     <input
-                        type="text"
-                        name="sku"
-                        value={productData.sku}
-                        onChange={handleChange}
-                        className="w-full border-gray-300 rounded-md p-2"
+                        id="image"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="text-sm file:mr-4 file:rounded-full file:border-0 file:bg-gray-950 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-rabbit-red"
                     />
-                </div>
-
-                {/* Sizes */}
-                <div className="mb-6">
-                    <label className="block font-semibold mb-2">
-                        Sizes (comma-separated)
-                    </label>
-                    <input
-                        type="text"
-                        name="sizes"
-                        value={productData.sizes.join(", ")}
-                        onChange={(e) =>
-                            setProductData({
-                                ...productData,
-                                sizes: e.target.value.split(",").map((size) => size.trim()),
-                            })
-                        }
-                        className="w-full border-gray-300 rounded-md p-2"
-                    />
-                </div>
-
-                {/* Colors */}
-                <div className="mb-6">
-                    <label className="block font-semibold mb-2">
-                        Colors (comma-separated)
-                    </label>
-                    <input
-                        type="text"
-                        name="colors"
-                        value={productData.colors.join(", ")}
-                        onChange={(e) =>
-                            setProductData({
-                                ...productData,
-                                colors: e.target.value.split(",").map((color) => color.trim()),
-                            })
-                        }
-                        className="w-full border-gray-300 rounded-md p-2"
-                    />
-                </div>
-
-                {/* Image Upload */}
-                <div className="mb-6">
-                    <label className="block font-semibold mb-2">Upload Image</label>
-                    <input type="file" onChange={handleImageUpload} />
-                    {uploading && <p>Uploading image... </p>}
-                    <div className="flex gap-4 mt-4">
-                        {productData.images.map((image, index) => (
-                            <div key={index}>
-                                <img
-                                    src={image.url}
-                                    alt="Product Image"
-                                    className="w-20 h-20 object-cover rounded-md shadow-md"
-                                />
-                            </div>
+                    {uploading && <p className="mt-2 animate-pulse text-sm text-gray-500">Uploading image…</p>}
+                    <div className="mt-4 flex flex-wrap gap-4">
+                        {productData.images.map((image) => (
+                            <img
+                                key={image.url}
+                                src={image.url}
+                                alt={image.altText || "Product image"}
+                                className="h-20 w-20 animate-scale-in rounded-lg object-cover shadow-md"
+                            />
                         ))}
                     </div>
                 </div>
 
                 <button
                     type="submit"
-                    className="w-full bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition-colors"
+                    disabled={saving || uploading}
+                    className="w-full rounded-full bg-emerald-600 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
                 >
-                    Update Product
+                    {saving ? "Saving…" : "Update Product"}
                 </button>
             </form>
         </div>

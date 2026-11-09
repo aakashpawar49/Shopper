@@ -1,118 +1,126 @@
-import { useEffect } from "react"
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useParams } from "react-router-dom"
+import { Link, useParams } from "react-router-dom";
+import { HiArrowLeft } from "react-icons/hi2";
 import { fetchOrderDetails } from "../redux/slices/orderSlice";
+import PageLoader from "../components/Common/PageLoader";
+import { formatDate, formatPrice } from "../lib/format";
+
+const StatusPill = ({ ok, okText, pendingText }) => (
+  <span
+    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+      ok ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+    }`}
+  >
+    {ok ? okText : pendingText}
+  </span>
+);
 
 const OrderDetailsPage = () => {
-    const { id } = useParams();
-    const dispatch = useDispatch();
-    const { orderDetails, loading, error } = useSelector((state) => state.orders);
+  const { id } = useParams();
+  const dispatch = useDispatch();
+  const orderDetails = useSelector((state) => state.orders.orderDetails);
+  const loading = useSelector((state) => state.orders.loading);
+  const error = useSelector((state) => state.orders.error);
 
-    useEffect(() => {
-        dispatch(fetchOrderDetails(id));
-    }, [dispatch, id]);
+  useEffect(() => {
+    const request = dispatch(fetchOrderDetails(id));
+    return () => request.abort();
+  }, [dispatch, id]);
 
-    if(loading) return <p>Loading....</p>
-    if(error) return <p>Error: {error}</p>
+  // Ignore details left over from a previously viewed order
+  const order = orderDetails?._id === id ? orderDetails : null;
+
+  if (error) return <p className="py-20 text-center text-red-600">Couldn&apos;t load this order: {error}</p>;
+  if (loading || !order) return <PageLoader />;
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6">
-        <h2 className="text-2xl md:text-3xl font-bold mb-6">Order Details</h2>
-        {!orderDetails ? (
-            <p>No Order details found</p>
-        ) : (
-            <div className="p-4 sm:p-6 rounded-lg border">
-                {/* Order Info */}
-                <div className="flex flex-col sm:flex-row justify-between mb-8">
-                    <div>
-                        <h3 className="text-lg md:text-xl font-semibold">
-                            Order ID: #{orderDetails._id}
-                        </h3>
-                        <p className="text-gray-600">
-                            {new Date(orderDetails.createdAt).toLocaleDateString()}
-                        </p>
-                    </div>
-                    <div className="flex flex-col items-start sm:items-end mt-4 sm:mt-0">
-                        <span  
-                            className={`${
-                            orderDetails.isPaid 
-                            ? "bg-green-100 text-green-700" 
-                            : "bg-red-100 text-red-700"
-                            } px-3 py-1 rounded-full text-sm font-medium mb-2`}
-                        >
-                            {orderDetails.isPaid ? "Approved" : "Pending"}
-                        </span>
-                        <span  
-                            className={`${
-                            orderDetails.isDelivered
-                            ? "bg-green-100 text-green-700" 
-                            : "bg-yellow-100 text-yellow-700"
-                            } px-3 py-1 rounded-full text-sm font-medium mb-2`}
-                        >
-                            {orderDetails.isDelivered ? "Delivered" : "Pending Delivery"}
-                        </span>
-                    </div>
-                </div>
-                {/* CUstomer, Payment, Shipping Info */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mb-8">
-                    <div>
-                        <h4 className="text-lg font-semibold mb-2">Payment Info</h4>
-                        <p>Payment Method: {orderDetails.paymentMethod}</p>
-                        <p>Status: {orderDetails.isPaid ? "Paid" : "Unpaid"}</p>
-                    </div>
-                    <div>
-                        <h4 className="text-lg font-semibold mb-2">Shipping Info</h4>
-                        <p>Shipping Method: {orderDetails.shippingMethod}</p>
-                        <p>
-                            Address:{" "}
-                            {`${orderDetails.shippingAddress.city}, ${orderDetails.shippingAddress.country}`}</p>
-                    </div> 
-                </div>
-                {/* Product List */}
-                <div className="overflow-x-auto">
-                    <h4 className="text-lg font-semibold mb-4">Products</h4>
-                    <table className="min-w-full text-gray-600 mb-4">
-                        <thead className="bg-gray-100">
-                            <tr>
-                                <th className="px-4 py-2">Name</th>
-                                <th className="px-4 py-2">Unit Price</th>
-                                <th className="px-4 py-2">Quantity</th>
-                                <th className="px-4 py-2">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {orderDetails.orderItems.map((item) => (
-                                <tr key={item.productId} className="border-b">
-                                    <td className="px-4 py-2 flex items-center">
-                                        <img
-                                            src={item.image || "/placeholder.jpg"}
-                                            alt={item.name}
-                                            className="w-12 h-12 object-cover rounded-lg mr-4"
-                                        />
-                                        <Link
-                                            to={`/product/${item.productId}`}
-                                            className="text-blue-500 hover:underline"
-                                        >
-                                            {item.name}
-                                        </Link>
-                                    </td>
-                                    <td className="py-2 px-4">${item.price}</td>  
-                                    <td className="py-2 px-4">${item.quantity}</td>  
-                                    <td className="py-2 px-4">${item.price * item.quantity}</td>  
-                                </tr>
-                            ))}
-                        </tbody>
-                </table>
-            </div>
+    <div className="container mx-auto max-w-5xl px-4 py-10 md:px-6">
+      <Link to="/my-orders" className="group mb-6 inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-black">
+        <HiArrowLeft className="transition-transform group-hover:-translate-x-1" /> Back to My Orders
+      </Link>
 
-            {/* Back to Orders Link */}
-            <Link to="/my-orders" className="text-blue-500 hover:underline">
-                Back to My Orders
-            </Link>
+      <div className="animate-fade-up rounded-2xl border border-gray-100 p-6 shadow-sm md:p-8">
+        {/* Order info */}
+        <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row">
+          <div>
+            <h1 className="text-xl font-bold md:text-2xl">Order #{order._id.slice(-8).toUpperCase()}</h1>
+            <p className="text-sm text-gray-500">Placed on {formatDate(order.createdAt)}</p>
+          </div>
+          <div className="flex flex-wrap items-start gap-2">
+            <StatusPill ok={order.isPaid} okText="Paid" pendingText="Payment pending" />
+            <StatusPill ok={order.isDelivered} okText="Delivered" pendingText="Delivery pending" />
+          </div>
         </div>
-    )}
-  </div>
-  )
-}
+
+        {/* Payment and shipping */}
+        <div className="mb-8 grid gap-6 rounded-xl bg-gray-50 p-5 sm:grid-cols-2">
+          <div>
+            <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-gray-500">Payment</h4>
+            <p>Method: {order.paymentMethod}</p>
+            <p>Status: {order.isPaid ? "Paid" : "Unpaid"}</p>
+          </div>
+          <div>
+            <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-gray-500">Shipping</h4>
+            {order.shippingMethod && <p>Method: {order.shippingMethod}</p>}
+            <p>
+              {order.shippingAddress?.address && `${order.shippingAddress.address}, `}
+              {order.shippingAddress?.city}, {order.shippingAddress?.country}
+            </p>
+          </div>
+        </div>
+
+        {/* Products */}
+        <h4 className="mb-4 text-lg font-semibold">Products</h4>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left text-sm text-gray-600">
+            <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
+              <tr>
+                <th className="px-4 py-3">Name</th>
+                <th className="px-4 py-3">Unit Price</th>
+                <th className="px-4 py-3">Quantity</th>
+                <th className="px-4 py-3 text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {order.orderItems.map((item) => (
+                <tr key={`${item.productId}-${item.size}-${item.color}`}>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={item.image || "/placeholder.jpg"}
+                        alt={item.name}
+                        loading="lazy"
+                        className="h-12 w-12 rounded-lg object-cover"
+                      />
+                      <Link to={`/product/${item.productId}`} className="link-underline font-medium text-gray-900">
+                        {item.name}
+                      </Link>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">{formatPrice(item.price)}</td>
+                  <td className="px-4 py-3">{item.quantity}</td>
+                  <td className="px-4 py-3 text-right font-medium text-gray-900">
+                    {formatPrice(item.price * item.quantity)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan={3} className="px-4 pt-4 text-right font-semibold text-gray-900">
+                  Total
+                </td>
+                <td className="px-4 pt-4 text-right text-lg font-bold text-gray-900">
+                  {formatPrice(order.totalPrice)}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default OrderDetailsPage;

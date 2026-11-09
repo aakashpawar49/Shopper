@@ -1,32 +1,32 @@
 import { Link } from "react-router-dom";
+import { HiOutlineFaceFrown } from "react-icons/hi2";
+import ProductCard from "./ProductCard";
+import { ProductGridSkeleton } from "../Common/Skeletons";
 
-const ProductGrid = ({ products, loading, error }) => {
-  if (loading) {
-    return <p>Loading...</p>;
-  }
+const ProductGrid = ({ products, loading, error, skeletonCount = 8 }) => {
+  if (loading) return <ProductGridSkeleton count={skeletonCount} />;
 
   if (error) {
-    return <p>Error: {error}</p>;
+    return <p className="py-16 text-center text-red-600">Couldn&apos;t load products: {error}</p>;
+  }
+
+  if (!products?.length) {
+    return (
+      <div className="flex animate-fade-in flex-col items-center py-20 text-center">
+        <HiOutlineFaceFrown className="mb-4 h-12 w-12 text-gray-300" />
+        <p className="mb-1 text-lg font-semibold">No products found</p>
+        <p className="mb-6 text-sm text-gray-500">Try removing a filter or searching for something else.</p>
+        <Link to="/collections/all" className="btn-outline">
+          Clear filters
+        </Link>
+      </div>
+    );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 gap-x-4 gap-y-10 md:gap-x-6 lg:grid-cols-4">
       {products.map((product, index) => (
-        <Link key={index} to={`/product/${product?._id}`} className="block">
-          <div className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition">
-            <div className="w-full aspect-[4/5] mb-4">
-              <img
-                src={product.images?.[0]?.url || "/placeholder.jpg"}
-                alt={product.images?.[0]?.altText || product.name}
-                className="w-full h-full object-cover rounded-lg"
-              />
-            </div>
-            <h3 className="text-sm font-medium mb-2">{product.name}</h3>
-            <p className="text-gray-600 font-semibold text-sm tracking-tight">
-              ₹ {product.price}
-            </p>
-          </div>
-        </Link>
+        <ProductCard key={product._id} product={product} index={index} />
       ))}
     </div>
   );

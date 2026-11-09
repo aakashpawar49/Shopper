@@ -1,221 +1,201 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
+const CATEGORIES = ["Top Wear", "Bottom Wear"];
+const GENDERS = ["Men", "Women"];
+const COLORS = ["Red", "Blue", "Black", "Green", "Yellow", "Grey", "White", "Pink", "Beige", "Navy"];
+const SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
+const MATERIALS = ["Cotton", "Wool", "Denim", "Polyester", "Silk", "Linen", "Viscose", "Fleece"];
+const BRANDS = ["Urban Threads", "Nike", "Adidas", "Puma", "Levis", "Ray Ban"];
+const PRICE_MAX = 1000;
+const PRICE_DEBOUNCE_MS = 350;
+
+const chipClass = (active) =>
+  `rounded-full border px-4 py-1.5 text-sm transition duration-200 ${
+    active ? "border-gray-950 bg-gray-950 text-white" : "border-gray-300 text-gray-700 hover:border-gray-950"
+  }`;
+
+const FilterGroup = ({ title, children }) => (
+  <fieldset className="mb-7">
+    <legend className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-gray-500">{title}</legend>
+    {children}
+  </fieldset>
+);
+
+// The URL is the single source of truth for the filters: the sidebar reads
+// from it and writes to it, and the collection page refetches when it changes.
 const FilterSidebar = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const getList = (key) => searchParams.get(key)?.split(",").filter(Boolean) ?? [];
 
-  const [filters, setFilters] = useState({
-    category: "",
-    gender: "",
-    color: "",
-    size: [],
-    material: [],
-    brand: [],
-    minPrice: 0,
-    maxPrice: 100,
-  });
+  const urlMaxPrice = Number(searchParams.get("maxPrice")) || PRICE_MAX;
+  const [maxPrice, setMaxPrice] = useState(urlMaxPrice);
+  const [syncedMaxPrice, setSyncedMaxPrice] = useState(urlMaxPrice);
+  const priceTimer = useRef(null);
 
-  const [priceRange, setPriceRange] = useState([0, 100]);
+  // Follow the URL when it changes elsewhere (e.g. "Clear all")
+  if (urlMaxPrice !== syncedMaxPrice) {
+    setSyncedMaxPrice(urlMaxPrice);
+    setMaxPrice(urlMaxPrice);
+  }
 
-  const categories = ["Top Wear", "Bottom Wear"];
-  const colors = ["Red", "Blue", "Black", "Green", "Yellow", "Grey", "White", "Pink", "Beige", "Navy"];
-  const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
-  const materials = ["Cotton", "Wool", "Denim", "Polyester", "Silk", "Linen", "Viscose", "Fleece"];
-  const brands = ["Urban Threads", "Nike", "Adidas", "Puma", "Levis", "Ray Ban"];
-  const genders = ["Men", "Women"];
+  useEffect(() => () => clearTimeout(priceTimer.current), []);
 
-  useEffect(() => {
-    const params = Object.fromEntries([...searchParams]);
-
-    setFilters({
-      category: params.category || "",
-      gender: params.gender || "",
-      color: params.color || "",
-      size: params.size ? params.size.split(",") : [],
-      material: params.material ? params.material.split(",") : [],
-      brand: params.brand ? params.brand.split(",") : [],
-      minPrice: params.minPrice !== undefined ? parseInt(params.minPrice) : 0,
-      maxPrice: params.maxPrice !== undefined ? parseInt(params.maxPrice) : 1000,
+  // Apply changes to the current URL params, keeping the others (search, sort, ...)
+  const updateParams = (changes) =>
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      Object.entries(changes).forEach(([key, value]) => {
+        const text = Array.isArray(value) ? value.join(",") : String(value ?? "");
+        if (text) next.set(key, text);
+        else next.delete(key);
+      });
+      return next;
     });
 
-    setPriceRange([0, params.maxPrice !== undefined ? parseInt(params.maxPrice) : 100]);
-  }, [searchParams]);
+  // Single-choice filters: clicking the selected option clears it
+  const toggleSingle = (key, value) => updateParams({ [key]: searchParams.get(key) === value ? "" : value });
 
-  const handleFilterChange = (e) => {
-    const { name, value, checked, type } = e.target;
-    let newFilters = { ...filters };
-
-    if (type === "checkbox") {
-      if (checked) {
-        newFilters[name] = [...(newFilters[name] || []), value];
-      } else {
-        newFilters[name] = newFilters[name].filter((item) => item !== value);
-      }
-    } else {
-      newFilters[name] = value;
-    }
-
-    setFilters(newFilters);
-    updateURLParams(newFilters);
-  };
-
-  const handleColorClick = (e) => {
-    const { name, value } = e.target;
-    const newFilters = { ...filters, [name]: value };
-    setFilters(newFilters);
-    updateURLParams(newFilters);
-  };
-
-  const updateURLParams = (newFilters) => {
-    const params = new URLSearchParams();
-    Object.keys(newFilters).forEach((key) => {
-      if (Array.isArray(newFilters[key]) && newFilters[key].length > 0) {
-        params.append(key, newFilters[key].join(","));
-      } else if (newFilters[key]) {
-        params.append(key, newFilters[key]);
-      }
+  // Multi-choice filters
+  const toggleMulti = (key, value) => {
+    const current = getList(key);
+    updateParams({
+      [key]: current.includes(value) ? current.filter((item) => item !== value) : [...current, value],
     });
-    setSearchParams(params);
-    navigate(`?${params.toString()}`);
   };
 
+  // The slider updates instantly, but the URL (and the API request) only
+  // changes once the user stops dragging.
   const handlePriceChange = (e) => {
-    const newPrice = parseInt(e.target.value);
-    setPriceRange([0, newPrice]);
-    const newFilters = { ...filters, minPrice: 0, maxPrice: newPrice };
-    setFilters(newFilters);
-    updateURLParams(newFilters);
+    const value = Number(e.target.value);
+    setMaxPrice(value);
+    clearTimeout(priceTimer.current);
+    priceTimer.current = setTimeout(() => {
+      updateParams({ minPrice: "", maxPrice: value >= PRICE_MAX ? "" : value });
+    }, PRICE_DEBOUNCE_MS);
   };
+
+  const sizes = getList("size");
+  const materials = getList("material");
+  const brands = getList("brand");
 
   return (
-    <div className='p-4'>
-      <h3 className='text-xl font-medium text-gray-800 mb-4'>Filter</h3>
+    <div className="p-6 lg:px-0 lg:pt-2">
+      <h3 className="mb-6 text-xl font-bold">Filters</h3>
 
-      {/* Category Filter */}
-      <div className='mb-6'>
-        <label className='block text-gray-600 font-medium mb-2'>Category</label>
-        {categories.map((category) => (
-          <div key={category} className='flex items-center mb-1'>
-            <input
-              type="radio"
-              name='category'
-              value={category}
-              onChange={handleFilterChange}
-              checked={filters.category === category}
-              className='mr-2 h-4 w-4 text-blue-500 focus:ring-blue-400 border-gray-300'
-            />
-            <span className='text-gray-700'>{category}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Gender Filter */}
-      <div className='mb-6'>
-        <label className='block text-gray-600 font-medium mb-2'>Gender</label>
-        {genders.map((gender) => (
-          <div key={gender} className='flex items-center mb-1'>
-            <input
-              type="radio"
-              name='gender'
-              value={gender}
-              onChange={handleFilterChange}
-              checked={filters.gender === gender}
-              className='mr-2 h-4 w-4 text-blue-500 focus:ring-blue-400 border-gray-300'
-            />
-            <span className='text-gray-700'>{gender}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Color Filter */}
-      <div className='mb-6'>
-        <label className="block text-gray-600 font-medium mb-2">Color</label>
-        <div className='flex flex-wrap gap-2'>
-          {colors.map((color) => (
+      <FilterGroup title="Category">
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map((category) => (
             <button
-              key={color}
-              name="color"
-              value={color}
-              onClick={handleColorClick}
-              className={`w-8 h-8 rounded-full border border-gray-300 cursor-pointer transition hover:scale-105 ${filters.color === color ? "ring-2 ring-blue-500" : ""}`}
-              style={{ backgroundColor: color.toLowerCase() }}
-            ></button>
+              key={category}
+              type="button"
+              aria-pressed={searchParams.get("category") === category}
+              onClick={() => toggleSingle("category", category)}
+              className={chipClass(searchParams.get("category") === category)}
+            >
+              {category}
+            </button>
           ))}
         </div>
-      </div>
+      </FilterGroup>
 
-      {/* Size Filter */}
-      <div className='mb-6'>
-        <label className="block text-gray-600 font-medium mb-2">Size</label>
-        {sizes.map((size) => (
-          <div key={size} className='flex items-center mb-1'>
-            <input
-              type='checkbox'
-              name="size"
-              value={size}
-              onChange={handleFilterChange}
-              checked={filters.size.includes(size)}
-              className='mr-2 h-4 w-4 text-blue-500 focus:ring-blue-400 border-gray-300'
+      <FilterGroup title="Gender">
+        <div className="flex flex-wrap gap-2">
+          {GENDERS.map((gender) => (
+            <button
+              key={gender}
+              type="button"
+              aria-pressed={searchParams.get("gender") === gender}
+              onClick={() => toggleSingle("gender", gender)}
+              className={chipClass(searchParams.get("gender") === gender)}
+            >
+              {gender}
+            </button>
+          ))}
+        </div>
+      </FilterGroup>
+
+      <FilterGroup title="Color">
+        <div className="flex flex-wrap gap-2.5">
+          {COLORS.map((color) => (
+            <button
+              key={color}
+              type="button"
+              title={color}
+              aria-label={color}
+              aria-pressed={searchParams.get("color") === color}
+              onClick={() => toggleSingle("color", color)}
+              className={`h-8 w-8 rounded-full border border-gray-300 transition duration-200 hover:scale-110 ${
+                searchParams.get("color") === color ? "scale-110 ring-2 ring-gray-950 ring-offset-2" : ""
+              }`}
+              style={{ backgroundColor: color.toLowerCase() }}
             />
-            <span className='text-gray-700'>{size}</span>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </FilterGroup>
 
-      {/* Material Filter */}
-      <div className='mb-6'>
-        <label className="block text-gray-600 font-medium mb-2">Material</label>
-        {materials.map((material) => (
-          <div key={material} className='flex items-center mb-1'>
+      <FilterGroup title="Size">
+        <div className="flex flex-wrap gap-2">
+          {SIZES.map((size) => (
+            <button
+              key={size}
+              type="button"
+              aria-pressed={sizes.includes(size)}
+              onClick={() => toggleMulti("size", size)}
+              className={`min-w-11 ${chipClass(sizes.includes(size))}`}
+            >
+              {size}
+            </button>
+          ))}
+        </div>
+      </FilterGroup>
+
+      <FilterGroup title="Material">
+        {MATERIALS.map((material) => (
+          <label key={material} className="flex cursor-pointer items-center gap-3 py-1 text-sm text-gray-700 hover:text-black">
             <input
-              type='checkbox'
-              name="material"
-              value={material}
-              onChange={handleFilterChange}
-              checked={filters.material.includes(material)}
-              className='mr-2 h-4 w-4 text-blue-500 focus:ring-blue-400 border-gray-300'
+              type="checkbox"
+              checked={materials.includes(material)}
+              onChange={() => toggleMulti("material", material)}
+              className="h-4 w-4 rounded border-gray-300 accent-gray-950"
             />
-            <span className='text-gray-700'>{material}</span>
-          </div>
+            {material}
+          </label>
         ))}
-      </div>
+      </FilterGroup>
 
-      {/* Brand Filter */}
-      <div className='mb-6'>
-        <label className="block text-gray-600 font-medium mb-2">Brand</label>
-        {brands.map((brand) => (
-          <div key={brand} className='flex items-center mb-1'>
+      <FilterGroup title="Brand">
+        {BRANDS.map((brand) => (
+          <label key={brand} className="flex cursor-pointer items-center gap-3 py-1 text-sm text-gray-700 hover:text-black">
             <input
-              type='checkbox'
-              name="brand"
-              value={brand}
-              onChange={handleFilterChange}
-              checked={filters.brand.includes(brand)}
-              className='mr-2 h-4 w-4 text-blue-500 focus:ring-blue-400 border-gray-300'
+              type="checkbox"
+              checked={brands.includes(brand)}
+              onChange={() => toggleMulti("brand", brand)}
+              className="h-4 w-4 rounded border-gray-300 accent-gray-950"
             />
-            <span className='text-gray-700'>{brand}</span>
-          </div>
+            {brand}
+          </label>
         ))}
-      </div>
+      </FilterGroup>
 
-      {/* Price Range Filter */}
-      <div className='mb-8'>
-        <label className="block text-gray-600 font-medium mb-2">Price Range</label>
+      <FilterGroup title="Price Range">
         <input
           type="range"
-          name="priceRange"
           min={0}
-          max={1000}
-          value={priceRange[1]}
+          max={PRICE_MAX}
+          step={10}
+          value={maxPrice}
           onChange={handlePriceChange}
-          className='w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer'
+          aria-label="Maximum price"
+          className="w-full cursor-pointer accent-gray-950"
         />
-        <div className='flex justify-between text-gray-600 mt-2'>
+        <div className="mt-2 flex justify-between text-sm text-gray-600">
           <span>₹0</span>
-          <span>₹{priceRange[1]}</span>
+          <span className="font-semibold text-gray-950">
+            {maxPrice >= PRICE_MAX ? `₹${PRICE_MAX}+` : `Up to ₹${maxPrice}`}
+          </span>
         </div>
-      </div>
+      </FilterGroup>
     </div>
   );
 };

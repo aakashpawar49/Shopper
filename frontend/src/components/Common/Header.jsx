@@ -1,16 +1,16 @@
-import Topbar from "../Layout/Topbar"
-import Navbar from "./Navbar"
+import Topbar from "../Layout/Topbar";
+import Navbar from "./Navbar";
 
+// The announcement bar scrolls away; the navbar sticks to the top
 const Header = () => {
   return (
-    <header className="border-b border-gray-200">
-        {/* Topbar */}
-        <Topbar />
-        {/* Navbar */}
-        {/* Cart Drawer */}
+    <>
+      <Topbar />
+      <header className="sticky top-0 z-40">
         <Navbar />
-    </header>
-  )
-}
+      </header>
+    </>
+  );
+};
 
-export default Header
+export default Header;

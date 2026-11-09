@@ -1,78 +1,84 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import Hero from "../components/Layout/Hero";
+import BrandMarquee from "../components/Layout/BrandMarquee";
 import FeaturedCollection from "../components/Products/FeaturedCollection";
 import FeatureSection from "../components/Products/FeatureSection";
 import GenderCollection from "../components/Products/GenderCollectionSection";
 import NewArrivals from "../components/Products/NewArrivals";
 import ProductDetails from "../components/Products/ProductDetails";
 import ProductGrid from "../components/Products/ProductGrid";
-import { useDispatch, useSelector } from "react-redux";
+import SectionHeading from "../components/Common/SectionHeading";
+import { ProductDetailsSkeleton } from "../components/Common/Skeletons";
 import { fetchProductsByFilters } from "../redux/slices/productSlice";
-import axios from "axios";
+import api from "../lib/api";
 
 const Home = () => {
   const dispatch = useDispatch();
-  const { products, loading, error } = useSelector((state) => state.products);
+  const products = useSelector((state) => state.products.products);
+  const loading = useSelector((state) => state.products.loading);
+  const error = useSelector((state) => state.products.error);
   const [bestSeller, setBestSeller] = useState(null);
+  const [bestSellerFailed, setBestSellerFailed] = useState(false);
 
   useEffect(() => {
-    dispatch(
-      fetchProductsByFilters({
-        gender: "Women",
-        category: "Top Wear",
-        limit: 8,
-      })
-    );
-
-    const fetchBestSeller = async () => {
-      try {
-        const { data } = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/products/best-seller`
-        );
-        setBestSeller(data);
-      } catch (err) {
-        console.error("Best seller fetch failed:", err.message);
-      }
-    };
-
-    fetchBestSeller();
+    const request = dispatch(fetchProductsByFilters({ gender: "Women", category: "Top Wear", limit: 8 }));
+    return () => request.abort();
   }, [dispatch]);
 
+  // The best-seller response is the full product, so it is handed straight to
+  // ProductDetails instead of being fetched a second time by ID.
+  useEffect(() => {
+    const controller = new AbortController();
+    api
+      .get("/api/products/best-seller", { signal: controller.signal })
+      .then(({ data }) => setBestSeller(data))
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+        console.error("Best seller fetch failed:", err.message);
+        setBestSellerFailed(true);
+      });
+    return () => controller.abort();
+  }, []);
+
   return (
-    <div>
+    <>
       <Hero />
       <GenderCollection />
+      <BrandMarquee />
       <NewArrivals />
 
-      {/* Best Seller */}
-      <section className="my-12">
-        <h2 className="text-3xl font-bold text-center mb-4">Best Seller</h2>
-        {bestSeller ? (
-          <ProductDetails productId={bestSeller._id} readonly />
-        ) : (
-          <p className="text-center">Loading best seller product...</p>
-        )}
-      </section>
+      {!bestSellerFailed && (
+        <section className="bg-gray-50 px-4 py-16">
+          <SectionHeading
+            eyebrow="Most loved"
+            title="Best Seller"
+            subtitle="The piece everyone keeps coming back for."
+          />
+          {bestSeller ? (
+            <ProductDetails product={bestSeller} badge="Best Seller" titleAs="h3" />
+          ) : (
+            <ProductDetailsSkeleton />
+          )}
+        </section>
+      )}
 
-      {/* Top Wear Section */}
-      <section className="my-12 container mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-4">
-          Top Wear for Women
-        </h2>
-        {loading ? (
-          <p className="text-center">Loading products...</p>
-        ) : error ? (
-          <p className="text-center text-red-600">Error: {error}</p>
-        ) : products.length > 0 ? (
-          <ProductGrid products={products} />
-        ) : (
-          <p className="text-center">No products found.</p>
+      <section className="container mx-auto px-4 py-16 md:px-6">
+        <SectionHeading eyebrow="Trending now" title="Top Wear for Women" />
+        <ProductGrid products={products} loading={loading} error={error} />
+        {!loading && products.length > 0 && (
+          <div className="mt-12 text-center">
+            <Link to="/collections/all?gender=Women&category=Top Wear" className="btn-outline">
+              View all
+            </Link>
+          </div>
         )}
       </section>
 
       <FeaturedCollection />
       <FeatureSection />
-    </div>
+    </>
   );
 };
 

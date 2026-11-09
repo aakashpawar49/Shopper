@@ -1,66 +1,32 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import { createSlice } from "@reduxjs/toolkit";
+import { createApiThunk, rejectedMessage } from "../../lib/api";
 
 // Fetch all orders (admin only)
-export const fetchAllOrders = createAsyncThunk(
+export const fetchAllOrders = createApiThunk(
     "adminOrders/fetchAllOrders",
-    async (_, { rejectWithValue }) => {
-        try {
-            const response = await axios.get(
-                `${import.meta.env.VITE_BACKEND_URL}/api/admin/orders`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("userToken")}`
-                    },
-                }
-            );
-            return response.data;
-        } catch (error) {
-            return rejectWithValue(error.response?.data || { message: error.message });
-        }
-    }
+    () => ({ url: "/api/admin/orders", requiresAuth: true }),
+    (data) => (Array.isArray(data) ? data : [])
 );
 
-// update order delivery status
-export const updateOrderStatus = createAsyncThunk(
+// Update an order's delivery status
+export const updateOrderStatus = createApiThunk(
     "adminOrders/updateOrderStatus",
-    async ({id, status }, { rejectWithValue }) => {
-        try {
-            const response = await axios.put(
-                `${import.meta.env.VITE_BACKEND_URL}/api/admin/orders/${id}`,
-                {status},
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("userToken")}`
-                    },
-                }
-            );
-            return response.data;
-        } catch (error) {
-            return rejectWithValue(error.response?.data || { message: error.message });
-        }
-    }
+    ({ id, status }) => ({
+        method: "put",
+        url: `/api/admin/orders/${id}`,
+        data: { status },
+        requiresAuth: true,
+    })
 );
 
-// Delete an order
-export const deleteOrder = createAsyncThunk(
+// Delete an order and return its ID
+export const deleteOrder = createApiThunk(
     "adminOrders/deleteOrder",
-    async (id, { rejectWithValue }) => {
-        try {
-            await axios.delete(
-                `${import.meta.env.VITE_BACKEND_URL}/api/admin/orders/${id}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("userToken")}`
-                    },
-                }
-            );
-            return id;
-        } catch (error) {
-            return rejectWithValue(error.response?.data || { message: error.message });
-        }
-    }
+    (id) => ({ method: "delete", url: `/api/admin/orders/${id}`, requiresAuth: true }),
+    (_data, id) => id
 );
+
+const sumSales = (orders) => orders.reduce((total, order) => total + (order.totalPrice || 0), 0);
 
 const adminOrderSlice = createSlice({
     name: "adminOrders",
@@ -74,43 +40,30 @@ const adminOrderSlice = createSlice({
     reducers: {},
     extraReducers: (builder) => {
         builder
-        // Fetch all orders
-        .addCase(fetchAllOrders.pending, (state) => {
-            state.loading = true;
-            state.error = null;
-        })
-        .addCase(fetchAllOrders.fulfilled, (state, action) => {
-            state.loading = false;
-            state.orders = action.payload;
-            state.totalOrders = action.payload.length;
-
-            // calculate total sales
-            const totalSales = action.payload.reduce((acc, order) => {
-                return acc + (order.totalPrice || 0);
-            }, 0);
-            state.totalSales = totalSales;
-        })
-        .addCase(fetchAllOrders.rejected, (state, action) => {
-            state.loading = false;
-            state.error = action.payload?.message || "Something went wrong";
-        })
-        //Update Order Status
-        .addCase(updateOrderStatus.fulfilled, (state, action) => {
-            const updatedOrder = action.payload;
-            const orderIndex = state.orders.findIndex(
-                (order) => order._id === updatedOrder._id
-            );
-            if (orderIndex !== -1) {
-                state.orders[orderIndex] = updatedOrder;
-            }
-        })
-
-        // Delete Order
-        .addCase(deleteOrder.fulfilled, (state, action) => {
-            state.orders = state.orders.filter(
-                (order) => order._id !== action.payload
-            );
-        });
+            .addCase(fetchAllOrders.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchAllOrders.fulfilled, (state, action) => {
+                state.loading = false;
+                state.orders = action.payload;
+                state.totalOrders = action.payload.length;
+                state.totalSales = sumSales(action.payload);
+            })
+            .addCase(fetchAllOrders.rejected, (state, action) => {
+                state.loading = false;
+                state.error = rejectedMessage(action);
+            })
+            .addCase(updateOrderStatus.fulfilled, (state, action) => {
+                const index = state.orders.findIndex((order) => order._id === action.payload._id);
+                if (index !== -1) state.orders[index] = action.payload;
+                state.totalSales = sumSales(state.orders);
+            })
+            .addCase(deleteOrder.fulfilled, (state, action) => {
+                state.orders = state.orders.filter((order) => order._id !== action.payload);
+                state.totalOrders = state.orders.length;
+                state.totalSales = sumSales(state.orders);
+            });
     },
 });
 
