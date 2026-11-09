@@ -17,7 +17,10 @@ const applyDnsServers = () => {
 const connectDB = async () => {
     try {
         applyDnsServers();
-        await mongoose.connect(process.env.MONGO_URI);
+        await mongoose.connect(process.env.MONGO_URI, {
+            // Fail within 10s (default 30s) when the database can't be reached
+            serverSelectionTimeoutMS: 10000,
+        });
         console.log("MongoDB connected successfully");
     } catch (err) {
         console.error("MongoDB connection failed.", err);

@@ -2,89 +2,63 @@ const express = require("express");
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const { protect } = require("../middleware/authMiddleware");
+const asyncHandler = require("../middleware/asyncHandler");
 
 const router = express.Router();
 
+// Response body for login and register: public user fields plus a signed JWT
+const authResponse = (user) => {
+    const payload = { user: { id: user.id, role: user.role } };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "40h" });
+
+    return {
+        user: {
+            _id: user.id, // frontend reads user._id
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+        },
+        token,
+    };
+};
+
 // @route POST /api/users/register
-router.post("/register", async (req, res) => {
-    const { name, email, password } = req.body;
+router.post(
+    "/register",
+    asyncHandler(async (req, res) => {
+        const { name, email, password } = req.body;
 
-    try {
-        let user = await User.findOne({ email });
-        if (user) return res.status(400).json({ message: "User already exists" });
+        const exists = await User.exists({ email });
+        if (exists) return res.status(400).json({ message: "User already exists" });
 
-        user = new User({ name, email, password });
-        await user.save();
-
-        const payload = { user: { id: user.id, role: user.role } };
-
-        jwt.sign(
-            payload,
-            process.env.JWT_SECRET,
-            { expiresIn: "40h" },
-            (err, token) => {
-                if (err) throw err;
-
-                res.status(201).json({
-                    user: { 
-                        _id: user.id, // frontend reads user._id
-                        id: user.id,
-                        name: user.name, 
-                        email: user.email,
-                        role: user.role,
-                    },
-                    token,
-                });
-            }
-        );
-    } catch (error) {
-        console.error(error);
-        res.status(500).send("Server Error");
-    }
-});
+        const user = await User.create({ name, email, password });
+        res.status(201).json(authResponse(user));
+    })
+);
 
 // @route POST /api/users/login
-router.post("/login", async (req, res) => {
-    const { email, password } = req.body;
+router.post(
+    "/login",
+    asyncHandler(async (req, res) => {
+        const { email, password } = req.body;
 
-    try {
-        let user = await User.findOne({ email });
+        // Only plain strings can match, so objects like { $ne: null } are rejected
+        if (typeof email !== "string" || typeof password !== "string") {
+            return res.status(400).json({ message: "Invalid Credentials" });
+        }
 
-        if (!user) return res.status(400).json({ message: "Invalid Credentials" });
+        const user = await User.findOne({ email });
+        if (!user || !(await user.matchPassword(password))) {
+            return res.status(400).json({ message: "Invalid Credentials" });
+        }
 
-        const isMatch = await user.matchPassword(password);
-
-        if (!isMatch) return res.status(400).json({ message: "Invalid Credentials" });
-
-        const payload = { user: { id: user.id, role: user.role } };
-
-        jwt.sign(
-            payload,
-            process.env.JWT_SECRET,
-            { expiresIn: "40h" },
-            (err, token) => {
-                if (err) throw err;
-
-                res.json({
-                    user: { 
-                        _id: user.id, // frontend reads user._id
-                        id: user.id,
-                        name: user.name, 
-                        email: user.email,
-                        role: user.role,
-                    },
-                    token,
-                });
-            }
-        );        
-    } catch (error) {
-        console.error(error);
-        res.status(500).send("Server Error");
-    }
-});
+        res.json(authResponse(user));
+    })
+);
 
 // @route GET /api/users/profile
-router.get("/profile", protect, async (req, res) => {
+router.get("/profile", protect, (req, res) => {
     res.status(200).json(req.user);
 });
 

@@ -25,7 +25,16 @@ const userSchema = new mongoose.Schema({
         default: "customer"
     },
     },
-    { timestamps: true }
+    {
+        timestamps: true,
+        // Never send the password hash in JSON responses
+        toJSON: {
+            transform: (doc, ret) => {
+                delete ret.password;
+                return ret;
+            },
+        },
+    }
 );
 
 //Password Hash Middleware

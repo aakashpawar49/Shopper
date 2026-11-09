@@ -1,156 +1,121 @@
 const express = require("express");
 const Product = require("../models/Product");
 const { protect, admin } = require("../middleware/authMiddleware");
+const asyncHandler = require("../middleware/asyncHandler");
+const validateObjectId = require("../middleware/validateObjectId");
 
 const router = express.Router();
 
-// @@route POST /api/products
+const PRODUCT_NOT_FOUND = { message: "Product not found" };
+
+// Fields an admin can set when creating or updating a product
+const EDITABLE_FIELDS = [
+    "name",
+    "description",
+    "price",
+    "discountPrice",
+    "countInStock",
+    "category",
+    "brand",
+    "sizes",
+    "colors",
+    "collections",
+    "material",
+    "gender",
+    "images",
+    "isFeatured",
+    "isPublished",
+    "tags",
+    "dimensions",
+    "weight",
+    "sku",
+];
+
+const SORT_OPTIONS = {
+    priceAsc: { price: 1 },
+    priceDesc: { price: -1 },
+    popularity: { rating: -1 },
+};
+
+// Escape user input so it is matched literally inside a RegExp
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// Let browsers reuse rarely-changing storefront responses for a short time
+const publicCache = (seconds) => (req, res, next) => {
+    res.set("Cache-Control", `public, max-age=${seconds}`);
+    next();
+};
+
+router.param("id", validateObjectId(PRODUCT_NOT_FOUND));
+
+// @route POST /api/products
 // @desc Create a new Product
 // @access Private/Admin
-router.post("/", protect, admin, async (req, res) => {
-    try {
-        const {
-            name,
-            description,
-            price,
-            discountPrice,
-            countInStock,
-            category,
-            brand,
-            sizes,
-            colors,
-            collections,
-            material,
-            gender,
-            images,
-            isFeatured,
-            isPublished,
-            tags,
-            dimensions,
-            weight,
-            sku,
-        } = req.body;
+router.post(
+    "/",
+    protect,
+    admin,
+    asyncHandler(async (req, res) => {
+        const data = {};
+        for (const field of EDITABLE_FIELDS) {
+            if (req.body[field] !== undefined) data[field] = req.body[field];
+        }
 
-        const product = new Product({
-            name,
-            description,
-            price,
-            discountPrice,
-            countInStock,
-            category,
-            brand,
-            sizes,
-            colors,
-            collections,
-            material,
-            gender,
-            images,
-            isFeatured,
-            isPublished,
-            tags,
-            dimensions,
-            weight,
-            sku,
-            user: req.user.id,
-        });
-
-        const createdProduct = await product.save();
+        const createdProduct = await Product.create({ ...data, user: req.user.id });
         res.status(201).json(createdProduct);
-    } catch (error) {
-        console.error(error);
-        res.status(500).send("Server Error");
-    }
-});
+    })
+);
 
 // @route PUT /api/products/:id
 // @desc Update an existing product ID
 // @access Private/Admin
-router.put("/:id", protect, admin, async (req, res) => {
-    try {
-        const {
-            name,
-            description,
-            price,
-            discountPrice,
-            countInStock,
-            category,
-            brand,
-            sizes,
-            colors,
-            collections,
-            material,
-            gender,
-            images,
-            isFeatured,
-            isPublished,
-            tags,
-            dimensions,
-            weight,
-            sku,
-        } = req.body;
-
+router.put(
+    "/:id",
+    protect,
+    admin,
+    asyncHandler(async (req, res) => {
         const product = await Product.findById(req.params.id);
+        if (!product) return res.status(404).json(PRODUCT_NOT_FOUND);
 
-        if (product) {
-            product.name = name || product.name;
-            product.description = description || product.description;
-            product.price = price || product.price;
-            product.discountPrice = discountPrice || product.discountPrice;
-            product.countInStock = countInStock || product.countInStock;
-            product.category = category || product.category;
-            product.brand = brand || product.brand;
-            product.sizes = sizes || product.sizes;
-            product.colors = colors || product.colors;
-            product.collections = collections || product.collections;
-            product.material = material || product.material;
-            product.gender = gender || product.gender;
-            product.images = images || product.images;
-            product.isFeatured = 
-                isFeatured !== undefined ? isFeatured : product.isFeatured;
-            product.isPublished = 
-                isPublished !== undefined ? isPublished : product.isPublished;
-            product.tags = tags || product.tags;
-            product.dimensions = dimensions || product.dimensions;
-            product.weight = weight || product.weight;
-            product.sku = sku || product.sku;
-
-            const updatedProduct = await product.save();
-            res.json(updatedProduct);
-        } else {
-            res.status(404).json({ message: "Product not found "});
+        // Only overwrite fields that were sent with a value. Empty strings keep
+        // the current value; 0 and false are real values (e.g. out of stock).
+        for (const field of EDITABLE_FIELDS) {
+            const value = req.body[field];
+            if (value !== undefined && value !== null && value !== "") {
+                product[field] = value;
+            }
         }
-    } catch (error) {
-        console.log(error);
-        res.status(500).send("Server Error");
-    }
-});
+
+        const updatedProduct = await product.save();
+        res.json(updatedProduct);
+    })
+);
 
 // @route DELETE /api/products/:id
 // @desc Delete product by ID
 // @access Private/Admin
-router.delete("/:id", protect, admin, async (req, res) => {
-    try {
-        // Find the product from DB 
-        const product = await Product.findById(req.params.id);
+router.delete(
+    "/:id",
+    protect,
+    admin,
+    asyncHandler(async (req, res) => {
+        const product = await Product.findByIdAndDelete(req.params.id);
+        if (!product) return res.status(404).json(PRODUCT_NOT_FOUND);
 
-        if (product) {
-            // Remove the product from DB
-            await product.deleteOne();
-            res.json({ message: "Product removed" });
-        } else {
-            res.status(404).json({ message: "Product not found" });
-        }
-    } catch (error) {
-        console.log(error);
-        res.status(500).send("Server Error");
-    }
-});
+        res.json({ message: "Product removed" });
+    })
+);
 
 // @route GET /api/products
 // @desc Get all the products with optional query filters
 // @access Public
-router.get("/", async (req, res) => {
-    try {
+router.get(
+    "/",
+    asyncHandler(async (req, res) => {
+        // Ignore repeated (array) parameters; every filter expects one string
+        const params = Object.fromEntries(
+            Object.entries(req.query).filter(([, value]) => typeof value === "string")
+        );
         const {
             collections,
             size,
@@ -163,35 +128,22 @@ router.get("/", async (req, res) => {
             category,
             material,
             brand,
-            limit
-        } = req.query;
+            limit,
+        } = params;
 
-        let query = {};
+        const query = {};
 
         if (collections && collections.toLowerCase() !== "all") {
             query.collections = collections;
         }
-
         if (category && category.toLowerCase() !== "all") {
             query.category = category;
         }
-        if (material) {
-            query.material = { $in: material.split(",") };
-        }
-        if (brand) {
-            query.brand = { $in: brand.split(",") };
-        }
-        if (size) {
-            query.sizes = { $in: size.split(",") };
-        }
-
-        if (color) {
-            query.colors = { $in: [color] };
-        }
-
-        if (gender) {
-            query.gender = gender;
-        }
+        if (material) query.material = { $in: material.split(",") };
+        if (brand) query.brand = { $in: brand.split(",") };
+        if (size) query.sizes = { $in: size.split(",") };
+        if (color) query.colors = color;
+        if (gender) query.gender = gender;
 
         if (minPrice || maxPrice) {
             query.price = {};
@@ -200,110 +152,79 @@ router.get("/", async (req, res) => {
         }
 
         if (search) {
-            query.$or = [
-                { name: { $regex: search, $options: "i" } },
-                { description: { $regex: search, $options: "i" } },
-            ];
+            const pattern = new RegExp(escapeRegex(search), "i");
+            query.$or = [{ name: pattern }, { description: pattern }];
         }
 
-        let sort = {};
-        if (sortBy) {
-            switch (sortBy) {
-                case "priceAsc":
-                    sort = { price: 1 };
-                    break;
-                case "priceDesc":
-                    sort = { price: -1 };
-                    break;
-                case "popularity":
-                    sort = { rating: -1 };
-                    break;
-                default:
-                    break;
-            }
-        }
+        const sort = Object.hasOwn(SORT_OPTIONS, sortBy) ? SORT_OPTIONS[sortBy] : {};
 
         const products = await Product.find(query)
             .sort(sort)
-            .limit(Number(limit) || 0);
+            .limit(Number(limit) || 0)
+            .lean();
         res.json(products);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server Error" });
-    }
-});
+    })
+);
 
 // @route GET /api/products/best-seller
 // @desc Get best-selling product
 // @access Public
-router.get("/best-seller", async (req, res) => {
-    try {
-        const bestSeller = await Product.findOne().sort({ rating: -1 });
-        if (bestSeller) {
-            res.json(bestSeller);
-        } else {
-            res.status(404).json({ message: "No Best seller found"});
-        }
-    } catch (error){
-        console.error(error);
-        res.status(500).send("Server Error");
-    }
-});
+router.get(
+    "/best-seller",
+    publicCache(60),
+    asyncHandler(async (req, res) => {
+        const bestSeller = await Product.findOne().sort({ rating: -1 }).lean();
+        if (!bestSeller) return res.status(404).json({ message: "No Best seller found" });
+
+        res.json(bestSeller);
+    })
+);
 
 // @route GET /api/products/new-arrivals
-// @desc Get new arrivals
+// @desc Get the 8 latest products
 // @access Public
-router.get("/new-arrivals", async (req, res) => {
-    try{
-        // Fetch latest 8 products
-        const newArrivals = await Product.find().sort({ createdAt: -1 }).limit(8);
+router.get(
+    "/new-arrivals",
+    publicCache(60),
+    asyncHandler(async (req, res) => {
+        const newArrivals = await Product.find().sort({ createdAt: -1 }).limit(8).lean();
         res.json(newArrivals);
-    }
-    catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server Error" });
-    }
-});
+    })
+);
 
 // @route GET /api/products/:id
 // @desc Get a single product by ID
 // @access Public
-router.get("/:id", async (req, res) => {
-    try {
-        const product = await Product.findById(req.params.id);
-        if (product) {
-            res.json(product);
-        } else {
-            res.status(404).json({ message: "Product Not Found" });
-        }
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server Error" });
-    }
-});
+router.get(
+    "/:id",
+    asyncHandler(async (req, res) => {
+        const product = await Product.findById(req.params.id).lean();
+        if (!product) return res.status(404).json(PRODUCT_NOT_FOUND);
+
+        res.json(product);
+    })
+);
 
 // @route GET /api/products/similar/:id
 // @desc Get similar products based on current product's gender and category
 // @access Public
-router.get("/similar/:id", async (req, res) => {
-    const { id } = req.params;
-    try {
-        const product = await Product.findById(id);
-        if(!product) {
-            return res.status(404).json({ message: "Product Not Found" });
-        }
+router.get(
+    "/similar/:id",
+    asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const product = await Product.findById(id).select("gender category").lean();
+        if (!product) return res.status(404).json(PRODUCT_NOT_FOUND);
 
         const similarProducts = await Product.find({
             _id: { $ne: id },
             gender: product.gender,
             category: product.category,
-        }).limit(4);
+        })
+            .limit(4)
+            .lean();
 
         res.json(similarProducts);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server Error" });
-    }
-});
+    })
+);
 
-module.exports = router;  
+module.exports = router;

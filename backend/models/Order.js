@@ -76,4 +76,7 @@ const orderSchema = new mongoose.Schema({
     { timestamps: true }
 );
 
+// "My orders": a user's orders, newest first
+orderSchema.index({ user: 1, createdAt: -1 });
+
 module.exports = mongoose.model("Order", orderSchema);
