@@ -22,4 +22,22 @@ export default defineConfig({
     port: 5173,
     https,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Keep rarely-changing libraries in their own chunks so browsers can
+        // cache them across deploys of the app code.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          if (/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/.test(id)) {
+            return 'react'
+          }
+          if (/[\\/]node_modules[\\/](@reduxjs|react-redux|redux|redux-thunk|immer|reselect)[\\/]/.test(id)) {
+            return 'redux'
+          }
+          return 'vendor'
+        },
+      },
+    },
+  },
 })

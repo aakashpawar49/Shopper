@@ -1,112 +1,77 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import { createSlice, isFulfilled, isPending, isRejected } from "@reduxjs/toolkit";
+import { createApiThunk, rejectedMessage } from "../../lib/api";
 
-// Load cart from localStorage
+const emptyCart = () => ({ products: [] });
+
 const loadCartFromStorage = () => {
-    const storedCart = localStorage.getItem("cart");
-    return storedCart ? JSON.parse(storedCart) : { products: [] };
+    try {
+        const storedCart = localStorage.getItem("cart");
+        return storedCart ? JSON.parse(storedCart) : emptyCart();
+    } catch {
+        return emptyCart();
+    }
 };
 
-// Save cart to localStorage
 const saveCartToStorage = (cart) => {
     localStorage.setItem("cart", JSON.stringify(cart));
 };
 
-// Fetch cart (user or guest)
-export const fetchCart = createAsyncThunk(
+// Load the cart for a user or guest. The backend answers 404 when no cart
+// exists yet, which simply means the cart is empty.
+export const fetchCart = createApiThunk(
     "cart/fetchCart",
-    async ({ userId, guestId }, { rejectWithValue }) => {
-        try {
-            const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/cart`, {
-                params: { userId, guestId },
-            });
-            return response.data;
-        } catch (error) {
-            console.error(error);
-            return rejectWithValue(error.response?.data || error.message);
-        }
-    }
+    ({ userId, guestId }) => ({
+        url: "/api/cart",
+        params: { userId, guestId },
+        validateStatus: (status) => (status >= 200 && status < 300) || status === 404,
+    }),
+    (data) => (Array.isArray(data?.products) ? data : emptyCart())
 );
 
-// Add item to cart
-export const addToCart = createAsyncThunk(
+// Add a product to the cart for a user or guest
+export const addToCart = createApiThunk(
     "cart/addToCart",
-    async ({ productId, quantity, size, color, guestId, userId }, { rejectWithValue }) => {
-        try {
-            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/cart`, {
-                productId,
-                quantity,
-                size,
-                color,
-                guestId,
-                userId,
-            });
-            return response.data;
-        } catch (error) {
-            return rejectWithValue(error.response?.data || error.message);
-        }
-    }
+    ({ productId, quantity, size, color, guestId, userId }) => ({
+        method: "post",
+        url: "/api/cart",
+        data: { productId, quantity, size, color, guestId, userId },
+    })
 );
 
-// Update item quantity
-export const updateCartItemQuantity = createAsyncThunk(
+// Update the quantity of an item in the cart
+export const updateCartItemQuantity = createApiThunk(
     "cart/updateCartItemQuantity",
-    async ({ productId, quantity, guestId, userId, size, color }, { rejectWithValue }) => {
-        try {
-            const response = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/cart`, {
-                productId,
-                quantity,
-                guestId,
-                userId,
-                size,
-                color,
-            });
-            return response.data;
-        } catch (error) {
-            return rejectWithValue(error.response?.data || error.message);
-        }
-    }
+    ({ productId, quantity, guestId, userId, size, color }) => ({
+        method: "put",
+        url: "/api/cart",
+        data: { productId, quantity, guestId, userId, size, color },
+    })
 );
 
-// Remove item from cart
-export const removeFromCart = createAsyncThunk(
+// Remove an item from the cart
+export const removeFromCart = createApiThunk(
     "cart/removeFromCart",
-    async ({ productId, guestId, userId, size, color }, { rejectWithValue }) => {
-        try {
-            const response = await axios({
-                method: "DELETE",
-                url: `${import.meta.env.VITE_BACKEND_URL}/api/cart`,
-                data: { productId, guestId, userId, size, color },
-            });
-            return response.data;
-        } catch (error) {
-            return rejectWithValue(error.response?.data || error.message);
-        }
-    }
+    ({ productId, guestId, userId, size, color }) => ({
+        method: "delete",
+        url: "/api/cart",
+        data: { productId, guestId, userId, size, color },
+    })
 );
 
-// Merge guest cart with user cart
-export const mergeCart = createAsyncThunk(
+// Merge the guest cart into the user's cart after login
+export const mergeCart = createApiThunk(
     "cart/mergeCart",
-    async ({ guestId, user }, { rejectWithValue }) => {
-        try {
-            const response = await axios.post(
-                `${import.meta.env.VITE_BACKEND_URL}/api/cart/merge`,
-                { guestId, user },
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("userToken")}`,
-                    },
-                }
-            );
-            return response.data;
-        } catch (error) {
-            return rejectWithValue(error.response?.data || error.message);
-        }
-    }
+    ({ guestId, user }) => ({
+        method: "post",
+        url: "/api/cart/merge",
+        data: { guestId, user },
+        requiresAuth: true,
+    })
 );
 
-// Slice
+// Every cart request returns the whole updated cart
+const cartThunks = [fetchCart, addToCart, updateCartItemQuantity, removeFromCart, mergeCart];
+
 const cartSlice = createSlice({
     name: "cart",
     initialState: {
@@ -116,80 +81,28 @@ const cartSlice = createSlice({
     },
     reducers: {
         clearCart: (state) => {
-            state.cart = { products: [] };
+            state.cart = emptyCart();
             localStorage.removeItem("cart");
         },
     },
     extraReducers: (builder) => {
         builder
-            .addCase(fetchCart.pending, (state) => {
+            .addMatcher(isPending(...cartThunks), (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(fetchCart.fulfilled, (state, action) => {
+            .addMatcher(isFulfilled(...cartThunks), (state, action) => {
                 state.loading = false;
                 state.cart = action.payload;
                 saveCartToStorage(action.payload);
             })
-            .addCase(fetchCart.rejected, (state, action) => {
+            .addMatcher(isRejected(...cartThunks), (state, action) => {
                 state.loading = false;
-                state.error = action.payload || action.error.message || "Failed to fetch cart";
-            })
-
-            .addCase(addToCart.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(addToCart.fulfilled, (state, action) => {
-                state.loading = false;
-                state.cart = action.payload;
-                saveCartToStorage(action.payload);
-            })
-            .addCase(addToCart.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload?.message || "Failed to add to cart";
-            })
-
-            .addCase(updateCartItemQuantity.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(updateCartItemQuantity.fulfilled, (state, action) => {
-                state.loading = false;
-                state.cart = action.payload;
-                saveCartToStorage(action.payload);
-            })
-            .addCase(updateCartItemQuantity.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload?.message || "Failed to update cart item quantity";
-            })
-
-            .addCase(removeFromCart.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(removeFromCart.fulfilled, (state, action) => {
-                state.loading = false;
-                state.cart = action.payload;
-                saveCartToStorage(action.payload);
-            })
-            .addCase(removeFromCart.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload?.message || "Failed to remove items";
-            })
-
-            .addCase(mergeCart.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(mergeCart.fulfilled, (state, action) => {
-                state.loading = false;
-                state.cart = action.payload;
-                saveCartToStorage(action.payload);
-            })
-            .addCase(mergeCart.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload?.message || "Failed to merge cart";
+                // fetchCart is a background sync on page load: if it fails, keep
+                // the locally stored cart instead of showing an error.
+                if (!fetchCart.rejected.match(action)) {
+                    state.error = rejectedMessage(action);
+                }
             });
     },
 });

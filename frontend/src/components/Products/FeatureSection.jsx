@@ -1,47 +1,28 @@
-import { 
-    HiShoppingBag,
-    HiArrowPath,
-    HiOutlineCreditCard
-} from "react-icons/hi2";
+import { HiShoppingBag, HiArrowPath, HiOutlineCreditCard } from "react-icons/hi2";
+import Reveal from "../Common/Reveal";
+
+const FEATURES = [
+  { Icon: HiShoppingBag, title: "Free International Shipping", text: "On all orders over ₹200.00" },
+  { Icon: HiArrowPath, title: "45 Days Return", text: "Money back guarantee" },
+  { Icon: HiOutlineCreditCard, title: "Secure Checkout", text: "100% secured checkout process" },
+];
 
 const FeatureSection = () => {
   return (
-    <section className="py-16 px-4 bg-white">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-        
-        {/* Feature - 1 */}
-        <div className="flex flex-col items-center">
-          <div className="p-4 rounded-full bg-gray-200 mb-4">
-            <HiShoppingBag className="text-3xl text-gray-700"/>
-          </div>
-          <h4 className="tracking-tighter font-semibold mb-2">FREE INTERNATIONAL SHIPPING</h4>
-          <p className="text-gray-600 text-sm tracking-tighter mt-1">
-            On all orders over ₹200.00
-          </p>
-        </div>
-
-        {/* Feature - 2 */}
-        <div className="flex flex-col items-center">
-          <div className="p-4 rounded-full bg-gray-200 mb-4">
-            <HiArrowPath className="text-3xl text-gray-700"/>
-          </div>
-          <h4 className="tracking-tighter font-semibold mb-2">45 DAYS RETURN</h4>
-          <p className="text-gray-600 text-sm tracking-tighter mt-1">
-            Money back guarantee
-          </p>
-        </div>
-
-        {/* Feature - 3 */}
-        <div className="flex flex-col items-center">
-          <div className="p-4 rounded-full bg-gray-200 mb-4">
-            <HiOutlineCreditCard className="text-3xl text-gray-700"/>
-          </div>
-          <h4 className="tracking-tighter font-semibold mb-2">SECURE CHECKOUT</h4>
-          <p className="text-gray-600 text-sm tracking-tighter mt-1">
-            100% secured checkout process.
-          </p>
-        </div>
-
+    <section className="px-4 py-20">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-3">
+        {FEATURES.map(({ Icon, title, text }, index) => (
+          <Reveal key={title} delay={index * 120}>
+            {/* Hover effects live on an inner element so they don't inherit the reveal delay */}
+            <div className="group flex h-full flex-col items-center rounded-2xl border border-gray-100 p-8 text-center transition duration-500 hover:-translate-y-1 hover:border-transparent hover:shadow-xl hover:shadow-gray-200/70">
+              <div className="mb-5 grid h-16 w-16 place-items-center rounded-full bg-gray-100 text-gray-700 transition duration-500 group-hover:rotate-[360deg] group-hover:bg-rabbit-red group-hover:text-white">
+                <Icon className="text-3xl" />
+              </div>
+              <h4 className="mb-2 text-sm font-bold uppercase tracking-wider">{title}</h4>
+              <p className="text-sm text-gray-500">{text}</p>
+            </div>
+          </Reveal>
+        ))}
       </div>
     </section>
   );
